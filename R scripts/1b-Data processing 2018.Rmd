@@ -1,5 +1,5 @@
 ---
-title: "1-GPS Data processing 2015"
+title: "1b-GPS Data processing 2018"
 author: "Aurore Ponchon"
 date: "12/04/2021"
 output: html_document
@@ -188,7 +188,7 @@ plot(fail.2018$DateTime,fail.2018$Difftime/60,xlab="Date",ylab="Time difference 
 
 ```
 
-### Merge data 201, define trips and clean trips.
+### Merge data 2018, define trips and clean trips.
 
 Parameters to define a trip are based on distance to the colony, number of locations out of the colony and duration. They are different for data from 2015 to account for duty cycles in loggers tracking successful breeders in 2018.
 
@@ -228,7 +228,7 @@ clean.trips.loc.2018<-clean_trips_locations(ALL.2018)
 
 ### Summary of raw trips by status
 
-The first table shows the summary of trip characteristics with raw data. The second one shows the summary of trip characteristics with a minimum distance of `r dist.thres`km, a minimum duration of `r thres.min`, gaps of less than `r diff.thres` and a minimum of `r row.thres` number of locations to define a trip.
+The first table shows the summary of trip characteristics with raw data. The second one shows the summary of trip characteristics with a minimum distance of `r dist.thres`km, a minimum duration of `r dur.thres`, gaps of less than `r diff.thres` and a minimum of `r row.thres` number of locations to define a trip.
 
 
 ```{r, echo=F}

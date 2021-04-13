@@ -1,3 +1,7 @@
+######################################################################################
+## Function to give a trip number based on the consecutive distances to the colony
+######################################################################################
+
 define_trips<-function(dataset){
 
 id<-unique(dataset$ID)
@@ -44,6 +48,212 @@ for (i in 1:length(id)){
     
     ALL<-rbind(ALL,indi)
 }
-return(ALL.)
-
+return(ALL)
 }
+
+######################################################################################
+## Function to give the summary of all raw trips by individuals
+######################################################################################
+    
+raw_trips_summary_ind<-function (dataset){
+        id<-unique(dataset$ID) 
+        dist.max.all.trips<-NULL
+        
+        for (i in 1:length(id)){
+            temp<-subset(dataset,dataset$ID==id[i])
+            nb.trip<-unique(temp$TravelNb)
+            
+            if (length(nb.trip)>1){
+                for (a in 2:length(nb.trip)){
+                    tempo<-subset(temp,temp$TravelNb==nb.trip[a])
+                    
+                    maxi<-data.frame(ID=id[i],Status=tempo$Status[1],TravelNb=nb.trip[a],
+                                     Distmax=max(tempo$Distmax),TripDur=sum(tempo$Difftime)/60,
+                                     maxDiffTime=max(tempo$Difftime)/60,TotalPath=tempo$PathLength[nrow(tempo)])
+                    dist.max.all.trips<-rbind(dist.max.all.trips,maxi)
+                    
+                }
+            }
+        }
+        
+        dist.max.all.trips<-       ddply(dist.max.all.trips,.(ID,Status),summarize,
+              NbTravel=length(TravelNb),
+              MeanDist=mean(Distmax), SDDist= std.error(Distmax, na.rm=T),
+              MinDist=min(Distmax),MaxDist=max(Distmax),
+              MeanDur=mean(TripDur),SDDur= std.error(TripDur, na.rm=T),
+              MinTripDur=min(TripDur),MaxTripDur=max(TripDur),
+              MinmaxDiff=min(maxDiffTime),MaxmaxDiff=max(maxDiffTime),
+              MeanTotPath=mean(TotalPath),SDDur=std.error(TotalPath, na.rm=T),
+              MinTotPath=min(TotalPath),MaxTotPath=max(TotalPath))
+        
+    return(dist.max.all.trips)
+}
+
+######################################################################################
+## Function to give the summary of all raw trips by status
+######################################################################################
+
+raw_trips_summary_status<-function (dataset){
+    id<-unique(dataset$ID) 
+    dist.max.all.trips<-NULL
+    
+    for (i in 1:length(id)){
+        temp<-subset(dataset,dataset$ID==id[i])
+        nb.trip<-unique(temp$TravelNb)
+        
+        if (length(nb.trip)>1){
+            for (a in 2:length(nb.trip)){
+                tempo<-subset(temp,temp$TravelNb==nb.trip[a])
+                
+                maxi<-data.frame(ID=id[i],Status=tempo$Status[1],TravelNb=nb.trip[a],
+                                 Distmax=max(tempo$Distmax),TripDur=sum(tempo$Difftime)/60,
+                                 maxDiffTime=max(tempo$Difftime)/60,TotalPath=tempo$PathLength[nrow(tempo)])
+                dist.max.all.trips<-rbind(dist.max.all.trips,maxi)
+                
+            }
+        }
+    }
+    
+    dist.max.all.trips<-      ddply(dist.max.all.trips,.(Status),summarize,
+                                    NbInd=length(unique(ID)),
+                                    NbTravel=length(TravelNb),
+                                    MeanDist=mean(Distmax), SDDist= std.error(Distmax, na.rm=T),
+                                    MinDist=min(Distmax),MaxDist=max(Distmax),
+                                    MeanDur=mean(TripDur),SDDur= std.error(TripDur, na.rm=T),
+                                    MinTripDur=min(TripDur),MaxTripDur=max(TripDur),
+                                    MinmaxDiff=min(maxDiffTime),MaxmaxDiff=max(maxDiffTime),
+                                    MeanTotPath=mean(TotalPath),SDDur=std.error(TotalPath, na.rm=T),
+                                    MinTotPath=min(TotalPath),MaxTotPath=max(TotalPath))
+    return(dist.max.all.trips)
+}
+
+######################################################################################
+## Function to clean trips based on trip thresholds and give summary by individuals
+######################################################################################
+
+clean_trips_summary_ind<-function (dataset){
+    summary.clean.trips<-NULL
+    id<-unique(dataset$ID)
+    
+for (i in 1:length(id)){
+    temp<-subset(dataset,dataset$ID==id[i])
+    nb.trip<-unique(temp$TravelNb)
+    
+    if (length(nb.trip)>1){
+        for (a in 2:length(nb.trip)){
+            tempo<-subset(temp,temp$TravelNb==nb.trip[a])
+       
+            if(tempo$Distmax[nrow(tempo)] < dist.thres){
+                if (tempo$DateTime[nrow(tempo)] < date.max){
+                    if (max(tempo$Difftime) <= diff.thres){
+                        
+                        dada<- data.frame(ID=id[i],Status=tempo$Status[1],TravelNb=nb.trip[a],
+                                          Distmax=max(tempo$Distmax),TripDur=sum(tempo$Difftime)/60,
+                                          maxDiffTime=max(tempo$Difftime)/60,TotalPath=tempo$PathLength[nrow(tempo)])
+                        
+                        summary.clean.trips<-rbind(summary.clean.trips,dada)
+                        
+                    }  #end of if difftime 
+                }  #end of if datetime ok
+            }   #end of if last line is on the nest
+        } #end of trip loop within individuals
+    } #end of if nb of trips > 0
+} #end of loop on individuals
+    
+    
+    summary.clean.trips<-    ddply(summary.clean.trips,.(ID,Status),summarize,
+          NbTravel=length(TravelNb),
+          MeanDist=mean(Distmax), SDDist= std.error(Distmax, na.rm=T),
+          MinDist=min(Distmax),MaxDist=max(Distmax),
+          MeanDur=mean(TripDur),SDDur= std.error(TripDur, na.rm=T),
+          MinTripDur=min(TripDur),MaxTripDur=max(TripDur),
+          MinmaxDiff=min(maxDiffTime),MaxmaxDiff=max(maxDiffTime),
+          MeanTotPath=mean(TotalPath),SDDur=std.error(TotalPath, na.rm=T),
+          MinTotPath=min(TotalPath),MaxTotPath=max(TotalPath))
+    return(summary.clean.trips)
+    
+} #end of function
+
+######################################################################################
+## Function to clean trips based on trip thresholds and give summary by individuals
+######################################################################################
+
+clean_trips_summary_status<-function (dataset){
+    summary.clean.trips<-NULL
+    id<-unique(dataset$ID)
+    
+    for (i in 1:length(id)){
+        temp<-subset(dataset,dataset$ID==id[i])
+        nb.trip<-unique(temp$TravelNb)
+        
+        if (length(nb.trip)>1){
+            for (a in 2:length(nb.trip)){
+                tempo<-subset(temp,temp$TravelNb==nb.trip[a])
+                
+                if(tempo$Distmax[nrow(tempo)] < dist.thres){
+                    if (tempo$DateTime[nrow(tempo)] < date.max){
+                        if (max(tempo$Difftime) <= diff.thres){
+                            
+                            dada<- data.frame(ID=id[i],Status=tempo$Status[1],TravelNb=nb.trip[a],
+                                              Distmax=max(tempo$Distmax),TripDur=sum(tempo$Difftime)/60,
+                                              maxDiffTime=max(tempo$Difftime)/60,TotalPath=tempo$PathLength[nrow(tempo)])
+                            
+                            summary.clean.trips<-rbind(summary.clean.trips,dada)
+                            
+                        }  #end of if difftime 
+                    }  #end of if datetime ok
+                }   #end of if last line is on the nest
+            } #end of trip loop within individuals
+        } #end of if nb of trips > 0
+    } #end of loop on individuals
+    
+    
+    summary.clean.trips<-    ddply(summary.clean.trips,.(Status),summarize,
+                                   NbInd=length(unique(ID)),
+                                   NbTravel=length(TravelNb),
+                                   MeanDist=mean(Distmax), SDDist= std.error(Distmax, na.rm=T),
+                                   MinDist=min(Distmax),MaxDist=max(Distmax),
+                                   MeanDur=mean(TripDur),SDDur= std.error(TripDur, na.rm=T),
+                                   MinTripDur=min(TripDur),MaxTripDur=max(TripDur),
+                                   MinmaxDiff=min(maxDiffTime),MaxmaxDiff=max(maxDiffTime),
+                                   MeanTotPath=mean(TotalPath),SDDur=std.error(TotalPath, na.rm=T),
+                                   MinTotPath=min(TotalPath),MaxTotPath=max(TotalPath))
+    return(summary.clean.trips)
+    
+} #end of function
+
+######################################################################################
+## Function to clean trips based on trip thresholds and give locations
+######################################################################################
+
+
+clean_trips_locations<-function (dataset){
+    clean.trips.loc<-NULL
+    id<-unique(dataset$ID)
+    
+    for (i in 1:length(id)){
+        temp<-subset(dataset,dataset$ID==id[i])
+        nb.trip<-unique(temp$TravelNb)
+        
+        if (length(nb.trip)>1){
+            for (a in 2:length(nb.trip)){
+                tempo<-subset(temp,temp$TravelNb==nb.trip[a])
+                
+                if(tempo$Distmax[nrow(tempo)] < dist.thres){
+                    if (tempo$DateTime[nrow(tempo)] < date.max){
+                        if (max(tempo$Difftime) <= diff.thres){
+                            clean.trips.loc<-rbind(clean.trips.loc,tempo)
+                            
+                        }  #end of if difftime 
+                    }  #end of if datetime ok
+                }   #end of if last line is on the nest
+            } #end of trip loop within individuals
+        } #end of if nb of trips > 0
+    } #end of loop on individuals
+    
+    return(clean.trips.loc)
+    
+} #end of function
+
+
+
