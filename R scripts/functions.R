@@ -76,16 +76,7 @@ raw_trips_summary_ind<-function (dataset){
             }
         }
         
-        dist.max.all.trips<-       ddply(dist.max.all.trips,.(ID,Status),summarize,
-              NbTravel=length(TravelNb),
-              MeanDist=mean(Distmax), SDDist= std.error(Distmax, na.rm=T),
-              MinDist=min(Distmax),MaxDist=max(Distmax),
-              MeanDur=mean(TripDur),SDDur= std.error(TripDur, na.rm=T),
-              MinTripDur=min(TripDur),MaxTripDur=max(TripDur),
-              MinmaxDiff=min(maxDiffTime),MaxmaxDiff=max(maxDiffTime),
-              MeanTotPath=mean(TotalPath),SDDur=std.error(TotalPath, na.rm=T),
-              MinTotPath=min(TotalPath),MaxTotPath=max(TotalPath))
-        
+
     return(dist.max.all.trips)
 }
 
@@ -143,7 +134,7 @@ for (i in 1:length(id)){
         for (a in 2:length(nb.trip)){
             tempo<-subset(temp,temp$TravelNb==nb.trip[a])
        
-            if(tempo$Distmax[nrow(tempo)] < dist.thres){
+        if(tempo$Distmax[nrow(tempo)] < last.dist){
                 if (tempo$DateTime[nrow(tempo)] < date.max){
                     if (max(tempo$Difftime) <= diff.thres){
                         
@@ -155,21 +146,12 @@ for (i in 1:length(id)){
                         
                     }  #end of if difftime 
                 }  #end of if datetime ok
-            }   #end of if last line is on the nest
+              }   #end of if last line is on the nest
         } #end of trip loop within individuals
     } #end of if nb of trips > 0
 } #end of loop on individuals
     
-    
-    summary.clean.trips<-    ddply(summary.clean.trips,.(ID,Status),summarize,
-          NbTravel=length(TravelNb),
-          MeanDist=mean(Distmax), SDDist= std.error(Distmax, na.rm=T),
-          MinDist=min(Distmax),MaxDist=max(Distmax),
-          MeanDur=mean(TripDur),SDDur= std.error(TripDur, na.rm=T),
-          MinTripDur=min(TripDur),MaxTripDur=max(TripDur),
-          MinmaxDiff=min(maxDiffTime),MaxmaxDiff=max(maxDiffTime),
-          MeanTotPath=mean(TotalPath),SDDur=std.error(TotalPath, na.rm=T),
-          MinTotPath=min(TotalPath),MaxTotPath=max(TotalPath))
+
     return(summary.clean.trips)
     
 } #end of function
@@ -190,7 +172,7 @@ clean_trips_summary_status<-function (dataset){
             for (a in 2:length(nb.trip)){
                 tempo<-subset(temp,temp$TravelNb==nb.trip[a])
                 
-                if(tempo$Distmax[nrow(tempo)] < dist.thres){
+                if(tempo$Distmax[nrow(tempo)] < last.dist){
                     if (tempo$DateTime[nrow(tempo)] < date.max){
                         if (max(tempo$Difftime) <= diff.thres){
                             
@@ -239,7 +221,7 @@ clean_trips_locations<-function (dataset){
             for (a in 2:length(nb.trip)){
                 tempo<-subset(temp,temp$TravelNb==nb.trip[a])
                 
-                if(tempo$Distmax[nrow(tempo)] < dist.thres){
+                if(tempo$Distmax[nrow(tempo)] < last.dist){
                     if (tempo$DateTime[nrow(tempo)] < date.max){
                         if (max(tempo$Difftime) <= diff.thres){
                             clean.trips.loc<-rbind(clean.trips.loc,tempo)

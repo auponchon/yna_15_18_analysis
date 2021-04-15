@@ -1,0 +1,386 @@
+---
+title: "1b-GPS Data processing 2018"
+author: "Aurore Ponchon"
+date: "12/04/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,message=FALSE,warning=FALSE,dpi=300)
+```
+
+GPS loggers are not the same for successful and failed breeders so they have to be processed differently before being merged. Moreover, data from 2015 and 2018 have different formats and different constraints so they are also processed separately. This file aims at formatting the data and compare results for 2018 when cleaning trips based on different threshold parameters.
+
+## Bird data import for 2018
+### Import data for successful breerders 2018
+
+Loggers deployed on successful breeders are IgotU GPS. They give time in __UTC GMT+2__ so 3h have to be added to get UTC local time (UTC=GMT+5). They record locations every 5 minutes. They have a duty cycle of 17h on/7h off, providing data from 5am to 22pm UTC. 
+Note that one successful breeder (BAR07,first file listed in directory) was tracked with a GPS-UHF logger and is processed with failed breeders.
+Two successful breeders (CB9, CC1) failed during tracking, losing their young chick so all data after failure were removed.
+
+```{r import of successful breeders 2018}
+library(fields)
+library(maptools)
+library(maps)
+library(stringr)
+library(xlsx)
+library(plotrix)
+library(pastecs)
+library(lme4)
+library(afex)
+library(simr)
+library(kableExtra)
+library(plyr)
+source("R scripts/functions.R")
+
+#Coordinates of the colony
+colony<-data.frame(Longitude =77.52356,Latitude=-37.8545)
+
+#import of successful breeders
+files.suc<-list.files("RawData/Breeders_2018")
+path.suc<-"RawData/Breeders_2018/"
+success.2018<-NULL
+
+#Limit data before failure for individuals that have failed breeding during tracking
+fail.lim<-c(as.POSIXct("2018-12-14 10:00:00", format="%F %H:%M:%S",tz="UTC"),
+            as.POSIXct("2018-12-06 12:00:00", format="%F %H:%M:%S",tz="UTC"))
+
+#first file for successful breeder is with GPS-UHF logger so treated in failed breeders loop
+for ( a in 2:length(files.suc)){
+  
+  temp.suc.2018<-read.csv2(paste(path.suc,files.suc[a],sep=""),as.is=T,
+                       header=T,sep=",",fill=T)
+  temp.suc.2018$DateTime<-paste(temp.suc.2018$Date,temp.suc.2018$Time,sep= " ")
+  
+  temp.suc.2018$DateTime <-as.POSIXct(strptime(temp.suc.2018$DateTime,format="%Y/%m/%d %H:%M:%S"),
+                                  format="%F %H:%M:%S",tz="UTC") 
+  temp.suc.2018$DateTime <-temp.suc.2018$DateTime + 3*3600
+  #extract ID from file name
+  temp.suc.2018$ID<- str_sub(files.suc[a],start=11,end=13)
+  temp.suc.2018$ID<-as.factor(temp.suc.2018$ID)
+  
+ 
+  #for individuals which have failed during tracking, remove dates after failure 
+  if(temp.suc.2018$ID[1]=="CB9"){
+    temp.suc.2018<-temp.suc.2018[temp.suc.2018$DateTime<fail.lim[1],]}
+  if(temp.suc.2018$ID[1]=="CC1"){
+    temp.suc.2018<-temp.suc.2018[temp.suc.2018$DateTime<fail.lim[2],]}
+  
+  temp.suc.2018<-temp.suc.2018[!duplicated(temp.suc.2018$DateTime)==T,]
+  temp.suc.2018$Status<-as.factor("success")
+  temp.suc.2018$Longitude<-as.numeric(temp.suc.2018$Longitude)
+  temp.suc.2018$Latitude<-as.numeric(temp.suc.2018$Latitude)
+  
+  #distance between location and colony
+  temp.suc.2018$Distmax<-NA
+  temp.suc.2018$Distmax<-as.vector(rdist.earth(temp.suc.2018[,c("Longitude","Latitude")],
+                                           colony[1,c("Longitude","Latitude")],miles=F))
+ 
+  #calculate distance between 2 consecutive points and time elapsed between 2 consecutive points  
+  temp.suc.2018$Distadj<-0
+  for ( n in 2:nrow(temp.suc.2018)){
+    temp.suc.2018$Distadj[n]<-rdist.earth(temp.suc.2018[n,c("Longitude","Latitude")],
+                                      temp.suc.2018[n-1,c("Longitude","Latitude")],miles=F)
+    
+    temp.suc.2018$Difftime<-c(0,difftime(temp.suc.2018$DateTime[2:nrow(temp.suc.2018)],
+                                   temp.suc.2018$DateTime[1:nrow(temp.suc.2018)-1],units="min"))
+ 
+  }
+  
+  temp.suc.2018<-temp.suc.2018[,c("ID","Status","DateTime","Longitude","Latitude",
+                                 "Distmax","Difftime","Distadj")]
+  
+  success.2018<-rbind(success.2018,temp.suc.2018)
+}
+
+```
+
+### Import data for failed breerders 2018
+
+Loggers deployed in failed breeders are GPS-UHF Ecotone GPS. They give time in __GMT__ so 5h have to be added to get local time (UTC=GMT+5). Note that two loggers on failed breeders had the same ID HAR01 so trips of 2 individuals have been recorded in the same file with the same ID. They have been separated manually based on locations.  
+
+```{r import of failed breeders in 2018}
+##Import of failed birds (GPS-UHF)
+files.fail<-list.files("RawData/Non_Breeders_2018")
+path.fail<-"RawData/Non_Breeders_2018/"
+fail.2018<-NULL
+
+for ( a in 1:length(files.fail)){
+
+  temp.fail.2018<-read.csv2(paste(path.fail,files.fail[a],sep=""),as.is=T,
+                               header=T,sep=";",fill=T)
+  temp.fail.2018$DateTime<-paste(temp.fail.2018$Year,"-", temp.fail.2018$Month,"-",
+                           temp.fail.2018$Day, " ", temp.fail.2018$Hour, ":",
+                           temp.fail.2018$Minute,":", temp.fail.2018$Second,sep="") 
+                           
+  temp.fail.2018$DateTime <-as.POSIXct(strptime(temp.fail.2018$DateTime,format="%F %H:%M:%S"),
+                                 format="%F %H:%M:%S",tz="UTC") 
+   temp.fail.2018$DateTime <- temp.fail.2018$DateTime + 5*3600
+       
+  temp.fail.2018<-temp.fail.2018[!duplicated(temp.fail.2018$DateTime)==T,]
+  
+  temp.fail.2018$Longitude<-as.numeric(temp.fail.2018$Longitude)
+  temp.fail.2018$Latitude<-as.numeric(temp.fail.2018$Latitude)
+  
+  #Assign colony coordinates when in range
+  temp.fail.2018$Longitude[which(is.na(temp.fail.2018$Longitude)==T & 
+                                   temp.fail.2018$In.range==1)]<-colony$Longitude
+  temp.fail.2018$Latitude[which(is.na(temp.fail.2018$Latitude)==T & 
+                                  temp.fail.2018$In.range==1)]<-colony$Latitude
+  temp.fail.2018<-temp.fail.2018[!is.na(temp.fail.2018$Latitude)==T,]
+  
+  if(files.fail[a]=="HAR01_YNA.csv"){
+    idd<-read.xlsx("RawData/HAR01_double_2018.xlsx",
+                   sheetIndex=1, header=TRUE,colIndex=c(4,11))
+    
+    temp.fail.2018$id<-idd$id
+    
+    #when "in.range" is true, locations are set to colony coordinates
+    temp.fail.2018$Logger.ID<-ifelse(temp.fail.2018$id=="1",temp.fail.2018$Logger.ID<-"HAR11",
+                                temp.fail.2018$Logger.ID<-"HAR12")
+    
+    temp.fail.2018<-temp.fail.2018[order(temp.fail.2018[,2],temp.fail.2018[,1]),-29]
+      }
+  
+  #Discriminate successful breeder
+  temp.fail.2018$Status<-ifelse(temp.fail.2018$Logger.ID=="BAR07", temp.fail.2018$Status<-"success",
+                           temp.fail.2018$Status<- "fail")
+  temp.fail.2018$Status<-as.factor(temp.fail.2018$Status)
+  
+  #distance between location and colony
+  temp.fail.2018$Distmax<-NA
+  temp.fail.2018$Distmax<-as.vector(rdist.earth(temp.fail.2018[,c("Longitude","Latitude")],
+                                           colony[1,c("Longitude","Latitude")],miles=F))
+  temp.fail.2018$Distmax[temp.fail.2018$In.range==1]<-0
+  names(temp.fail.2018)[1]<-"ID"
+  temp.fail.2018$ID<-as.factor(temp.fail.2018$ID)
+  
+ #calculate distance between 2 consecutive points and time elapsed between 2 consecutive points 
+    temp.fail.2018$Distadj<-0
+  for ( n in 2:nrow(temp.fail.2018)){
+    temp.fail.2018$Distadj[n]<-rdist.earth(temp.fail.2018[n,c("Longitude","Latitude")],
+                                      temp.fail.2018[n-1,c("Longitude","Latitude")],miles=F)
+  temp.fail.2018$Difftime<-c(0,difftime(temp.fail.2018$DateTime[2:nrow(temp.fail.2018)],
+                                   temp.fail.2018$DateTime[1:nrow(temp.fail.2018)-1],units="min"))
+  
+  }
+  
+    fail.2018$Difftime[which(fail.2018$Difftime<0)]<-0
+  temp.fail.2018<-temp.fail.2018[,c("ID","Status","DateTime","Longitude","Latitude","Distmax","Difftime","Distadj")]
+
+  fail.2018<-rbind(fail.2018,temp.fail.2018)
+  }
+```
+
+```{r plot of birds 2018,echo=F,fig.width=15,fig.height=6}
+par(mfrow=c(1,2))
+plot(success.2018$DateTime,success.2018$Distmax,xlab="Date",ylab="Distance to the colony (km)",
+     col=tim.colors(length(unique(success.2018$ID)))[as.factor(success.2018$ID)],pch=16,
+     main="Distance to the colony success 2018")
+plot(success.2018$DateTime,success.2018$Difftime/60,xlab="Date",ylab="Time difference (hrs)",
+     col=tim.colors(length(unique(success.2018$ID)))[as.factor(success.2018$ID)],pch=16,
+     main="Time elapsed success 2018")
+
+
+par(mfrow=c(1,2))
+plot(fail.2018$DateTime,fail.2018$Distmax,xlab="Date",ylab="Distance to the colony (km)",
+     col=tim.colors(length(unique(fail.2018$ID)))[as.factor(fail.2018$ID)],pch=16,
+     main="Distance failed 2018")
+plot(fail.2018$DateTime,fail.2018$Difftime/60,xlab="Date",ylab="Time difference (hrs)",
+     col=tim.colors(length(unique(fail.2018$ID)))[as.factor(fail.2018$ID)],pch=16,
+     main="Time elapsed failed 2018")
+
+```
+
+### Merge data 2018, define trips and clean trips.
+
+Parameters to define a trip are based on distance to the colony, number of locations out of the colony and duration. They are different for data from 2015 to account for duty cycles in loggers tracking successful breeders in 2018.
+
+```{r define and clean trips 2015}
+
+dataset.2018<-rbind(success.2018,fail.2018)
+dataset.2018<-dataset.2018[duplicated(dataset.2018$DateTime)==FALSE,] # remove duplicated points with the same date and time
+datasetTravelNb<-"NA"
+dataset.2018$PathLength<-0
+
+##Parameters to define a trip in 2018
+dist.thres<-1             #distance threshold (in km)
+last.dist<-10           #distance threshold (in km) when having only one location between 2 trips
+row.thres<- 12               #number of rows constituting a trip
+dur.thres<-120         #min duration of a trip
+diff.thres<-8 * 60    #max difftime in a trip (in min)
+reso<-30             #time resolution for interpolation (in min)
+date.max<-as.POSIXct("2018-12-26 12:00:00", format="%F %H:%M:%S",tz="UTC")
+
+#Define trip number within each individual
+ALL.2018<-define_trips(dataset.2018)   #function from source file
+
+#summarize raw trips by individuals or status
+dist.max.all.trips.2018.ind<-raw_trips_summary_ind(ALL.2018)    #function from source file
+dist.max.all.trips.2018.status<-raw_trips_summary_status(ALL.2018)  #function from source file
+
+
+#clean trips and give summary by individuals or status
+summary.clean.trips.2018.ind<-clean_trips_summary_ind(ALL.2018)    #function from source file
+summary.clean.trips.2018.status<-clean_trips_summary_status(ALL.2018)    #function from source file
+
+
+#clean trips and give locations of selected trips
+clean.trips.loc.2018<-clean_trips_locations(ALL.2018)
+```
+
+### Summary of raw trips by status
+
+The first table shows the summary of trip characteristics with raw data. The second one shows the summary of trip characteristics with a minimum distance of `r dist.thres`km, a minimum duration of `r dur.thres`min, gaps of less than `r diff.thres`min and a minimum of `r row.thres` number of locations to define a trip.
+
+
+```{r, echo=F}
+kbl(dist.max.all.trips.2018.status) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+
+kbl(summary.clean.trips.2018.status) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+```
+
+### Plots of trips by individuals
+
+In the plots, all black dots represent trips/data that have been excluded. All colored trips are the selected ones.
+
+```{r plot of trips 2018,echo=F,fig.heigth=8,fig.width=15}
+
+levo<-unique(clean.trips.loc.2018$ID)
+
+for (i in 1:length(levo)){
+    par(mfrow=c(1,3))
+  
+    sub<-subset(ALL.2018,ALL.2018$ID==levo[i])
+    subo<- subset(clean.trips.loc.2018,clean.trips.loc.2018$ID==levo[i])
+    sub$TravelNb<-subo$TravelNb[match(sub$DateTime,subo$DateTime)]
+    sub$TravelNb[which(is.na(sub$TravelNb)==T)]<-0
+    
+    plot(sub$DateTime,sub$Distmax,xlab="Date",ylab="Distance to the colony (km)",
+     col=tim.colors(length(unique(ALL.2018$ID)))[i],pch=16,
+     main=paste(levo[i],sub$Status[1], sep=" "))
+
+  plot( sub$DateTime,sub$Difftime/60,xlab="Date",ylab="Time elapsed between 2 locations (hrs)",
+     col=tim.colors(length(unique(ALL.2018$ID)))[i],pch=16,
+     main=paste(levo[i],sub$Status[1], sep=" "))
+
+  plot(sub$DateTime,sub$Distmax,xlab="Date",ylab="Distance to the colony (km)",
+     col=ifelse(sub$TravelNb>0,tim.colors(length(unique(ALL.2018$ID)))[i],"black"),pch=16,
+     cex=ifelse(sub$TravelNb>0,1.2,0.8),
+     main=paste(levo[i],subo$Status[1], sep=" "))
+}
+
+```
+
+### Interpolation of clean trips
+
+```{r interpolation 2018}
+ reso <- 30 * 60       #time resolution between 2 points in seconds
+
+new.trip<-NULL
+loc.interpolated.2018<-NULL
+id<-unique(clean.trips.loc.2018$ID)
+
+ #interpolate data for each individual separately 
+for (x in 1:length(id)){
+  sub<-subset(clean.trips.loc.2018,clean.trips.loc.2018$ID==id[x])
+  trip<-unique(sub$TravelNb)
+
+   #interpolate data for each trip separately 
+  for (y in 1:length(trip)){
+    sub.trip<-subset(sub,sub$TravelNb==trip[y])
+    sub.trip$TimeSinceOrigin<-rep(0,nrow(sub.trip))
+
+  for (z in 1:nrow(sub.trip)){
+    sub.trip$TimeSinceOrigin[z]<-difftime(sub.trip$DateTime[z],sub.trip$DateTime[1],units="sec")
+  }
+
+ 
+  # Resampling of long and lat with regular time intervals 
+  sub.lat1 <- regul(x=sub.trip$TimeSinceOrigin, y=sub.trip$Latitude,
+                    n=round((max(sub.trip$TimeSinceOrigin)/reso),0),
+                    deltat=reso, methods="linear",xmin=0,units="sec")
+  sub.lon1 <- regul(x=sub.trip$TimeSinceOrigin, y=sub.trip$Longitude,
+                    n=round((max(sub.trip$TimeSinceOrigin)/reso),0),
+                    deltat=reso, methods="linear",xmin=0,units="sec")
+
+  new.sub <- data.frame(Longitude=sub.lon1[[2]]$Series, Latitude=sub.lat1[[2]]$Series, Time=as.vector(sub.lon1[[1]]),
+                        DateTime=sub.trip$DateTime[1]+as.vector(sub.lon1[[1]]),TravelNb=trip[y])
+
+  #Recreate a dataframe with individual and trip characteristics
+  new.sub$ID<-id[x]
+  new.sub$Status<-rep(unique(sub$Status),nrow(new.sub))
+  new.sub$Distmax<-as.vector(rdist.earth(new.sub[,c("Longitude","Latitude")],
+                                         colony[1,c("Longitude","Latitude")],miles=F))
+  new.sub$Difftime<-c(0,difftime(new.sub$DateTime[2:nrow(new.sub)],new.sub$DateTime[1:nrow(new.sub)-1],units="mins"))
+  new.sub$Distadj<-0
+
+  for (z in 2:nrow(new.sub)){
+    new.sub$Distadj[z]<-rdist.earth(new.sub[z,c("Longitude","Latitude")],
+                                    new.sub[z-1,c("Longitude","Latitude")], miles=F)
+  }
+
+ new.trip<-rbind(new.trip,new.sub)
+  }
+}
+
+#create a new global dataset with interpolated data
+loc.interpolated.2018<-new.trip[,c("ID","Status","TravelNb","DateTime","Longitude","Latitude",
+                                   "Distmax","Difftime","Distadj")]
+
+#save(loc.interpolated.2018,file="NewlyCreatedData/clean_interp_loc_2018.RData")
+
+
+summary.trips.interp1<-ddply(loc.interpolated.2018,.(ID,Status,TravelNb),summarize,DistmaxIndTrip=max(Distmax),
+                             TripDurIndTrip=sum(Difftime)/60,TotPathIndTrip=sum(Distadj))
+
+summary.trips.interp2<-ddply(summary.trips.interp1,.(ID,Status),summarize,NbTrips=length(DistmaxIndTrip),
+                             DistmaxInd=mean(DistmaxIndTrip),
+                             TripDurInd=mean(TripDurIndTrip),TotPathInd=mean(TotPathIndTrip))
+
+summary.trips.interp<-ddply(summary.trips.interp2,.(Status),summarize,
+                            NbTrip=mean(NbTrips),NbTripSE=std.error(NbTrips,na.rm=T),
+                            Distmax=mean(DistmaxInd),DistmaxSE=std.error(DistmaxInd,na.rm=T),
+                            TripDur=mean(TripDurInd),TripDurSE=std.error(TripDurInd,na.rm=T),
+                            TotPath=mean(TotPathInd),TotPathSE=std.error(TotPathInd,na.rm=T))
+```
+### Summary of clean interpolated trips by status
+
+The first table shows the summary of trip characteristics with raw data. The second one shows the summary of trip characteristics with a minimum distance of `r dist.thres`km, a minimum duration of `r dur.thres`, gaps of less than `r diff.thres` and a minimum of `r row.thres` number of locations to define a trip with a time resolution of `r reso` for interpolation.
+
+```{r, echo=F}
+kbl(summary.trips.interp) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+### Statistics
+
+Linear mixed models are applied to test whether the trip variables are different between failed and successful breeders
+
+```{r LMM}
+maxdist<-lmer(sqrt(DistmaxIndTrip) ~ Status + (1|ID),data=summary.trips.interp1)
+dur<-lmer(sqrt(TripDurIndTrip) ~ Status + (1|ID),data=summary.trips.interp1)
+totdist<-lmer(sqrt(TotPathIndTrip) ~ Status + (1|ID),data=summary.trips.interp1)
+
+anova(maxdist)
+
+anova(dur)
+
+anova(totdist)
+```
+
+#Power analysis based on Simr package
+
+```{r SIMR, echo=F}
+simmaxdist<-powerSim(maxdist)
+simdur<-powerSim(dur)
+simdtotdist<-powerSim(totdist)
+
+simmaxdist
+simdur
+simdtotdist
+```
