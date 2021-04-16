@@ -122,7 +122,7 @@ raw_trips_summary_status<-function (dataset){
 ## Function to clean trips based on trip thresholds and give summary by individuals
 ######################################################################################
 
-clean_trips_summary_ind<-function (dataset){
+clean_trips_summary_ind<-function (dataset,diff.threshold){
     summary.clean.trips<-NULL
     id<-unique(dataset$ID)
     
@@ -160,7 +160,7 @@ for (i in 1:length(id)){
 ## Function to clean trips based on trip thresholds and give summary by individuals
 ######################################################################################
 
-clean_trips_summary_status<-function (dataset){
+clean_trips_summary_status<-function (dataset,diff.threshold){
     summary.clean.trips<-NULL
     id<-unique(dataset$ID)
     
@@ -209,7 +209,7 @@ clean_trips_summary_status<-function (dataset){
 ######################################################################################
 
 
-clean_trips_locations<-function (dataset){
+clean_trips_locations<-function (dataset,diff.threshold){
     clean.trips.loc<-NULL
     id<-unique(dataset$ID)
     

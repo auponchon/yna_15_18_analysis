@@ -1,7 +1,7 @@
 ---
-title: "1-GPS Data processing 2015 - 1 - 360/10"
+title: "1b-GPS Data processing 2015"
 author: "Aurore Ponchon"
-date: "26/09/2019"
+date: "26/04/2019"
 output: html_document
 ---
 
@@ -32,12 +32,13 @@ source("R scripts/Functions.R")
 
 #Coordinates of the colony
 colony<-data.frame(Longitude =77.52356,Latitude=-37.8545)
+date.max<-as.POSIXct("2015-12-22 12:00:00", format="%F %H:%M:%S",tz="UTC") 
 
 ##Import data for successful birds (classical GPS)
-success.2015<-read.table("RawData/ams_yna_2015-16_gps_success.txt",header=T,sep="\t")
+success.2015<-read.table("Data/RawData/ams_yna_2015-16_gps_success.txt",header=T,sep="\t")
 success.2015$Status<-as.factor("success")
 success.2015$DateTime<-as.POSIXct(paste(strptime(success.2015$Date,format="%d/%m/%Y"),
-                                        success.2015$Time,sep=" "),tz="")
+                                        success.2015$Time,sep=" "),tz="UTC")
 success.2015<-success.2015[,c("Logger.ID","Status","DateTime","Longitude","Latitude","Speed","Altitude")]
 
 #distance between location and colony
@@ -60,12 +61,12 @@ success.2015$Difftime[which(success.2015$Difftime<0)]<-0
 
 ### Import data for failed breeders
 
-Loggers deployed on failed breeders are GPS-UHF Ecotone. They give __time in GMT__ so 5h have to be added to obtain local time (UTC=GMT+5).They record locations every 5-15 minutes, depending on weather conditions. They provide more gaps in the data
+Loggers deployed on failed breeders are Ecotone GPS-UHF. They give __time in GMT__ so 5h have to be added to obtain local time (UTC=GMT+5).They record locations every 5-15 minutes, depending on weather conditions. They provide more gaps in the data
 
 ```{r import failed breeders 2015}
 
 ##Import data for failed birds (GPS-UHF)
-fail.2015<-read.table("RawData/ams_yna_2015-16_gps_fail.txt",header=T,sep="\t")
+fail.2015<-read.table("Data/RawData/ams_yna_2015-16_gps_fail.txt",header=T,sep="\t")
 fail.2015$Date<-paste(fail.2015$Year,fail.2015$Month,fail.2015$Day,sep="/")
 fail.2015$Time<-paste(fail.2015$Hour,fail.2015$Minute,fail.2015$Second,sep=":")
 fail.2015$Status<-as.factor("fail")
@@ -95,7 +96,7 @@ for (n in 2:nrow(fail.2015)){
   fail.2015$Difftime[n]<-difftime(fail.2015$DateTime[n],fail.2015$DateTime[n-1],units="mins")
 }
 fail.2015$Difftime[which(fail.2015$Difftime<0)]<-0
-
+fail.2015<-subset(fail.2015,fail.2015$DateTime < date.max)
 ```
 
 ```{r plot of birds 2015 all,echo=F,fig.width=15,fig.height=6}
@@ -132,15 +133,11 @@ dist.thres<-1             #distance threshold (in km)
 last.dist<-10           #distance threshold (in km) when having only one location between 2 trips
 row.thres<- 12               #number of rows constituting a trip (corresponding to minimum 1h)
 dur.thres<-120         #min duration of a trip
-diff.thres<-360     #max difftime in a trip
-date.max<-as.POSIXct("2015-12-22 12:00:00", format="%F %H:%M:%S",tz="UTC") 
-
 
 #Define trip number within each individual
 ALL.2015<-define_trips(dataset.2015)   #function from source file
 
 #summarize raw trips by individuals or status
-dist.max.all.trips.2015.ind<-raw_trips_summary_ind(ALL.2015)    #function from source file
 dist.max.all.trips.2015.status<-raw_trips_summary_status(ALL.2015)  #function from source file
 
 #clean trips and give summary by individuals or status
@@ -300,13 +297,13 @@ anova(totdist)
 #Power analysis based on Simr package
 
 ```{r SIMR, echo=F}
-simmaxdist<-powerSim(maxdist)
-simdur<-powerSim(dur)
-simdtotdist<-powerSim(totdist)
-
-simmaxdist
-simdur
-simdtotdist
+# simmaxdist<-powerSim(maxdist)
+# simdur<-powerSim(dur)
+# simdtotdist<-powerSim(totdist)
+# 
+# simmaxdist
+# simdur
+# simdtotdist
 ```
 
 
