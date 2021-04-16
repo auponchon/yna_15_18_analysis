@@ -35,58 +35,62 @@ hist(proc.essai$angle)
 
 #fiding the right set of parameters for step length and turning angles  for 3 states
  set.seed(12345)
- nruns<-25
- mles<-vector("numeric",length=nruns)
-
-for (foo in 1:nruns){
-  print(foo)
-  mu0<-sort(c(runif(1,0.3,10),runif(1,1,20),runif(1,5,30)) ) # means for step length
-  sigma0<-c(runif(1,0.3,10),runif(1,0.3,30),runif(1,0.3,10))  #sd for step length
-  zeromass0<-runif(3,0,0.01)
-  stepPar0<-c(mu0,sigma0,zeromass0)  #joint object for step length
-  angleMean0<-sample(c(0,pi),size=3,replace=T)   #mean for turning angle
-  kappa0<-runif(3,0,5)  # angle concentration
-  anglePar0<-c(angleMean0,kappa0)
-
-  print(c(stepPar0,anglePar0))
-
-  m0<-fitHMM(data=proc.essai,nbStates=3,stepPar0=stepPar0,anglePar0=anglePar0,
-             formula=~1,angleDist="vm")
-  mles[foo]<--m0$mod$minimum
-
-  print( mles[foo])
-}
-
-table(round(mles))
+#  nruns<-25
+#  mles<-vector("numeric",length=nruns)
+# 
+# for (foo in 1:nruns){
+#   print(foo)
+#   mu0<-sort(c(runif(1,0.3,10),runif(1,1,20),runif(1,5,30)) ) # means for step length
+#   sigma0<-c(runif(1,0.3,10),runif(1,0.3,30),runif(1,0.3,10))  #sd for step length
+#   zeromass0<-runif(3,0,0.01)
+#   stepPar0<-c(mu0,sigma0,zeromass0)  #joint object for step length
+#   angleMean0<-sample(c(0,pi),size=3,replace=T)   #mean for turning angle
+#   kappa0<-runif(3,0,5)  # angle concentration
+#   anglePar0<-c(angleMean0,kappa0)
+# 
+#   print(c(stepPar0,anglePar0))
+# 
+#   m0<-fitHMM(data=proc.essai,nbStates=3,stepPar0=stepPar0,anglePar0=anglePar0,
+#              formula=~1,angleDist="vm")
+#   mles[foo]<--m0$mod$minimum
+# 
+#   print( mles[foo])
+# }
+# 
+# table(round(mles))
 
 #lowest likelihood: -9345 with wrpcauchy
 #parameters: 
 
+#lowest likelihood: -9595.762 with vm
 ```
 
-After testing different sets of parameters, we take the ones that give the lowest likelihood to 
+After testing different sets of parameters and comparing how von mises and wrapcauchy, we take the ones that give the lowest likelihood to 
 run the final model 
 
 ```{r final HMM}
-
-
-mu0<-c()  #3 / 6.5 / 6.8
-sigma0<-c()  #9.6 / 22 / 5
-zeromass0<-c() #0.0088 / 0.0058 / 0.0069
+#Test with best paramaters with wrpcauchy angle distributions
+mu0<-c(3,6.5,6.8)  
+sigma0<-c(9.6,22,5)  
+zeromass0<-c(0.0088,0.0058,0.0069) 
 stepPar0<-c(mu0,sigma0,zeromass0) 
-angleMean0<-c(0,0,0)   #3.14 / 3.14 / 0 
-kappa0<-c()  # 0.18 / 0.16 / 0.48
+angleMean0<-c(3.14,0,0)  
+kappa0<-c(0.18,0.16,0.48)  
 anglePar0<-c(angleMean0,kappa0)
-finmod<-fitHMM(data=proc.essai,nbStates=3,stepPar0=stepPar0,anglePar0=anglePar0,
+finmodWPC<-fitHMM(data=proc.essai,nbStates=3,stepPar0=stepPar0,anglePar0=anglePar0,
            formula=~1,angleDist="wrpcauchy")
 
- res<-pseudoRes(finmod)
+ res<-pseudoRes(finmodWPC)
  par(mfrow=c(1,2))
 hist(res$stepRes)
 hist(res$angle)
- print(jarque.bera.test(res$step[which(!is.na(res$step))]))
-print(jarque.bera.test(res$angle[which(!is.na(res$angle))]))
+ 
+plotPR(finmodWPC)
+AIC(finmodWPC)
 
+loc.interpolated.2015$States<-viterbi(finmodWPC)
+
+save(loc.interpolated.2015,file="Data/NewlyCreatedData/loc_interpolated_states_2015.RData")
 ```
 
 
