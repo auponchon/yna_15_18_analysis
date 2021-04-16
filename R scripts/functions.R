@@ -61,7 +61,7 @@ raw_trips_summary_ind<-function (dataset){
         
         for (i in 1:length(id)){
             temp<-subset(dataset,dataset$ID==id[i])
-            nb.trip<-unique(temp$TravelNb)
+            nb.trip<-sort(unique(temp$TravelNb))
             
             if (length(nb.trip)>1){
                 for (a in 2:length(nb.trip)){

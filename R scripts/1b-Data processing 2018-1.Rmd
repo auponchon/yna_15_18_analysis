@@ -215,6 +215,8 @@ dur.thres<-120         #min duration of a trip
 
 #Define trip number within each individual
 ALL.2018<-define_trips(dataset.2018)   #function from source file
+ALL.2018$TravelID<-paste(ALL.2018$ID,ALL.2018$TravelNb,sep=".")
+save(ALL.2018,file="Data/NewlyCreatedData/raw_trips_2018.RData")
 
 #summarize raw trips by individuals or status. There is no time gap thresholds here, just total duration and distance
 dist.max.all.trips.2018.status<-raw_trips_summary_status(ALL.2018)  #function from source file
@@ -296,8 +298,8 @@ for (i in 1:length(levo)){
   
     sub<-subset(ALL.2018,ALL.2018$ID==levo[i])
     subo<- subset(clean.trips.loc.2018,clean.trips.loc.2018$ID==levo[i])
-    sub$TravelID<-subo$TravelNb[match(sub$DateTime,subo$DateTime)]
-    sub$TravelID[which(is.na(sub$TravelID)==T)]<-0
+    sub$TravelNb<-subo$TravelNb[match(sub$DateTime,subo$DateTime)]
+    sub$TravelNb[which(is.na(sub$TravelNb)==T)]<-0
     
     plot(sub$DateTime,sub$Distmax,xlab="Date",ylab="Distance to the colony (km)",
      col=tim.colors(length(unique(ALL.2018$ID)))[i],pch=16,
@@ -326,7 +328,15 @@ clean.trips.fail.2018<-clean_trips_locations(fail,diff.thres)
 
 clean.trips.loc.2018<-rbind(clean.trips.suc.2018,clean.trips.fail.2018)
 
- reso <- 30 * 60       #time resolution between 2 points in seconds
+#Number of gaps > 16min
+length(which(clean.trips.fail.2018$Difftime>16 ))/nrow(clean.trips.fail.2018)*100
+#Number of gaps > 20min
+length(which(clean.trips.loc.2015$Difftime>20))/nrow(clean.trips.loc.2015)*100
+#Number of gaps > 30min
+length(which(clean.trips.loc.2015$Difftime>30))/nrow(clean.trips.loc.2015)*100
+
+
+ reso <- 20 * 60       #time resolution between 2 points in seconds
 
 new.trip<-NULL
 loc.interpolated.2018<-NULL
@@ -365,6 +375,8 @@ for (x in 1:length(id)){
                                          colony[1,c("Longitude","Latitude")],miles=F))
   new.sub$Difftime<-c(0,difftime(new.sub$DateTime[2:nrow(new.sub)],new.sub$DateTime[1:nrow(new.sub)-1],units="mins"))
   new.sub$Distadj<-0
+  new.sub$TravelID<-paste(new.sub$ID,new.sub$TravelNb,sep=".")
+
 
   for (z in 2:nrow(new.sub)){
     new.sub$Distadj[z]<-rdist.earth(new.sub[z,c("Longitude","Latitude")],
@@ -376,28 +388,18 @@ for (x in 1:length(id)){
 }
 
 #create a new global dataset with interpolated data
-loc.interpolated.2018<-new.trip[,c("ID","Status","TravelNb","DateTime","Longitude","Latitude",
+loc.interpolated.2018<-new.trip[,c("ID","Status","TravelNb","TravelID","DateTime","Longitude","Latitude",
                                    "Distmax","Difftime","Distadj")]
+duty.off<-c('5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21') 
+  
+loc.interpolated.2018 <- subset(loc.interpolated.2018,
+                                strftime(loc.interpolated.2018$DateTime, "%H", tz="GMT") %in% duty.off)
 
-#save(loc.interpolated.2018,file="NewlyCreatedData/clean_interp_loc_2018.RData")
+
+#save(loc.interpolated.2018,file="Data/NewlyCreatedData/clean_interp_loc_day_2018.RData")
 
 
 raw.trips.2018<-raw_trips_summary_ind(ALL.2018)
-
-
-
-# summary.trips.interp1<-ddply(loc.interpolated.2018,.(ID,Status,TravelNb),summarize,DistmaxIndTrip=max(Distmax),
-#                              TripDurIndTrip=sum(Difftime)/60,TotPathIndTrip=sum(Distadj))
-# 
-# summary.trips.interp2<-ddply(summary.trips.interp1,.(ID,Status),summarize,NbTrips=length(DistmaxIndTrip),
-#                              DistmaxInd=mean(DistmaxIndTrip),
-#                              TripDurInd=mean(TripDurIndTrip),TotPathInd=mean(TotPathIndTrip))
-# 
-# summary.trips.interp<-ddply(summary.trips.interp2,.(Status),summarize,
-#                             NbTrip=mean(NbTrips),NbTripSE=std.error(NbTrips,na.rm=T),
-#                             Distmax=mean(DistmaxInd),DistmaxSE=std.error(DistmaxInd,na.rm=T),
-#                             TripDur=mean(TripDurInd),TripDurSE=std.error(TripDurInd,na.rm=T),
-#                             TotPath=mean(TotPathInd),TotPathSE=std.error(TotPathInd,na.rm=T))
 ```
 
 
@@ -406,7 +408,6 @@ raw.trips.2018<-raw_trips_summary_ind(ALL.2018)
 Linear mixed models are applied to test whether the trip variables are different between failed and successful breeders on the raw trips
 
 ```{r LMM}
-
 
 maxdist<-lmer(sqrt(Distmax) ~ Status + (1|ID),data=raw.trips.2018)
 dur<-lmer(sqrt(TripDur) ~ Status + (1|ID),data=raw.trips.2018)
@@ -423,12 +424,12 @@ anova(totdist)
 #Power analysis based on Simr package
 
 ```{r SIMR, echo=F}
-simmaxdist<-powerSim(maxdist)
-simdur<-powerSim(dur)
-simdtotdist<-powerSim(totdist)
-
-simmaxdist
-simdur
-simdtotdist
+# simmaxdist<-powerSim(maxdist)
+# simdur<-powerSim(dur)
+# simdtotdist<-powerSim(totdist)
+# 
+# simmaxdist
+# simdur
+# simdtotdist
 ```
 

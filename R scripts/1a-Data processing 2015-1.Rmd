@@ -121,7 +121,7 @@ plot(fail.2015$DateTime,fail.2015$Difftime/60,xlab="Date",ylab="Time difference 
 
 ### Merge data 2015, define trips and clean trips.
 
-Parameters to define a trip are based on distance to the colony, number of locations out of the colony and duration. They are different for data from 2015 to account for duty cycles in loggers tracking successful breeders in 2018.
+Parameters to define a trip are based on distance to the colony, number of consecutive locations out of the colony and total duration of the trip.
 
 ```{r define and clean trips 2015}
 dataset.2015<-rbind(success.2015,fail.2015)
@@ -129,37 +129,68 @@ dataset.2015<-dataset.2015[duplicated(dataset.2015$DateTime)==FALSE,] # remove d
 datasetTravelNb<-"NA"
 dataset.2015$PathLength<-0
 
+##Parameters to define a trip in 2018
 dist.thres<-1             #distance threshold (in km)
 last.dist<-10           #distance threshold (in km) when having only one location between 2 trips
-row.thres<- 12               #number of rows constituting a trip (corresponding to minimum 1h)
+row.thres<- 12               #number of rows constituting a trip
 dur.thres<-120         #min duration of a trip
 
 #Define trip number within each individual
-ALL.2015<-define_trips(dataset.2015)   #function from source file
+dataset.2015<-define_trips(dataset.2015)   #function from source file
 
-#summarize raw trips by individuals or status
-dist.max.all.trips.2015.status<-raw_trips_summary_status(ALL.2015)  #function from source file
+#summarize raw trips by individuals or status. There is no time gap thresholds here, just total duration and distance
+dist.max.all.trips.2018.status<-raw_trips_summary_status(dataset.2015)  #function from source file
 
-#clean trips and give summary by individuals or status
-summary.clean.trips.2015.ind<-clean_trips_summary_ind(ALL.2015)    #function from source file
-summary.clean.trips.2015.status<-clean_trips_summary_status(ALL.2015)    #function from source file
+#10h gaps
+diff.thres<-10*60
+trips10h<-clean_trips_summary_status(dataset.2015,diff.thres)    #function from source file
 
+#8h gaps
+diff.thres<-8*60
+trips8h<-clean_trips_summary_status(dataset.2015,diff.thres)    #function from source file
 
-#clean trips and give locations of selected trips
-clean.trips.loc.2015<-clean_trips_locations(ALL.2015)
+#6h gaps
+diff.thres<-6*60
+trips6h<-clean_trips_summary_status(dataset.2015,diff.thres)    #function from source file
+
+#5h gaps
+diff.thres<-5*60
+trips5h<-clean_trips_summary_status(dataset.2015,diff.thres)    #function from source file
+
+#4h gaps
+diff.thres<-4*60
+trips4h<-clean_trips_summary_status(dataset.2015,diff.thres)    #function from source file
+
+#3h gaps
+diff.thres<-3*60
+trips3h<-clean_trips_summary_status(dataset.2015,diff.thres)    #function from source file
+
 ```
 
-### Summary of raw trips by status
+### Summary of raw and selected trips by status
 
-The first table shows the summary of trip characteristics with raw data. The second one shows the summary of trip characteristics with a minimum distance of `r dist.thres`km, a minimum duration of `r dur.thres`, gaps of less than `r diff.thres` and a minimum of `r row.thres` number of locations to define a trip.
-
+The first table shows the summary of trip characteristics with raw data (without any time gap threshold). The others show the summary of trip characteristics with different time gap thresholds. 
 
 ```{r, echo=F}
-kbl(dist.max.all.trips.2015.status) %>%
+kbl(dist.max.all.trips.2018.status,caption="Summary of raw trips") %>%
   kable_styling(bootstrap_options = c("striped", "hover"))
 
+kbl(trips10h,caption="Summary of trips with gaps <10h") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
 
-kbl(summary.clean.trips.2015.status) %>%
+kbl(trips8h,caption="Summary of trips with gaps <8h") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+kbl(trips6h,caption="Summary trips with gaps <6h") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+kbl(trips5h,caption="Summary trips with gaps <5h") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+kbl(trips4h,caption="Summary trips with gaps <4h") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+kbl(trips3h,caption="Summary trips with gaps <3h") %>%
   kable_styling(bootstrap_options = c("striped", "hover"))
 
 ```
@@ -169,29 +200,34 @@ kbl(summary.clean.trips.2015.status) %>%
 In the plots, all black dots represent trips/data that have been excluded. All colored trips are the selected ones.
 
 ```{r plot of trips 2015,echo=F,fig.heigth=8,fig.width=15}
+#clean trips with the chosen time gap threshold and give locations of selected trips
+diff.thres<- 5*60
+clean.trips.loc.2015<-clean_trips_locations(dataset.2015,diff.thres)
+clean.trips.loc.2015$TravelID<-paste(clean.trips.loc.2015$ID,clean.trips.loc.2015$TravelNb,sep=".")
 
 levo<-unique(clean.trips.loc.2015$ID)
 
 for (i in 1:length(levo)){
     par(mfrow=c(1,3))
   
-    sub<-subset(ALL.2015,ALL.2015$ID==levo[i])
+    sub<-subset(dataset.2015,dataset.2015$ID==levo[i])
     subo<- subset(clean.trips.loc.2015,clean.trips.loc.2015$ID==levo[i])
     sub$TravelNb<-subo$TravelNb[match(sub$DateTime,subo$DateTime)]
     sub$TravelNb[which(is.na(sub$TravelNb)==T)]<-0
     
     plot(sub$DateTime,sub$Distmax,xlab="Date",ylab="Distance to the colony (km)",
-     col=tim.colors(length(unique(ALL.2015$ID)))[i],pch=16,
+     col=tim.colors(length(unique(dataset.2015$ID)))[i],pch=16,
      main=paste(levo[i],sub$Status[1], sep=" "))
 
-  plot( sub$DateTime,sub$Difftime/60,xlab="Date",ylab="Time elapsed between 2 locations (hrs)",
-     col=tim.colors(length(unique(ALL.2015$ID)))[i],pch=16,
+   plot( sub$DateTime,sub$Difftime/60,xlab="Date",ylab="Time elapsed between 2 locations (h)",
+     col=tim.colors(length(unique(sub$TravelID)))[as.factor(sub$TravelID)],pch=16,
      main=paste(levo[i],sub$Status[1], sep=" "))
 
   plot(sub$DateTime,sub$Distmax,xlab="Date",ylab="Distance to the colony (km)",
-     col=ifelse(sub$TravelNb>0,tim.colors(length(unique(ALL.2015$ID)))[i],"black"),pch=16,
+     col=ifelse(sub$TravelNb>0,tim.colors(length(unique(sub$TravelID)))[as.factor(sub$TravelID)],"black"),pch=16,
      cex=ifelse(sub$TravelNb>0,1.2,0.8),
      main=paste(levo[i],subo$Status[1], sep=" "))
+
 }
 
 ```
@@ -199,6 +235,10 @@ for (i in 1:length(levo)){
 ### Interpolation of clean trips
 
 ```{r interpolation 2015}
+diff.thres<- 5*60
+clean.trips.loc.2015<-clean_trips_locations(dataset.2015,diff.thres)
+clean.trips.loc.2015$TravelID<-paste(clean.trips.loc.2015$ID,clean.trips.loc.2015$TravelNb,sep=".")
+
  reso <- 10 * 60       #time resolution between 2 points in seconds
 
 new.trip<-NULL
@@ -254,38 +294,19 @@ loc.interpolated.2015<-new.trip[,c("ID","Status","TravelNb","DateTime","Longitud
 
 #save(loc.interpolated.2015,file="NewlyCreatedData/clean_interp_loc_2015.RData")
 
+raw.trips.2015<-raw_trips_summary_ind(dataset.2015)
 
-summary.trips.interp1<-ddply(loc.interpolated.2015,.(ID,Status,TravelNb),summarize,DistmaxIndTrip=max(Distmax),
-                             TripDurIndTrip=sum(Difftime)/60,TotPathIndTrip=sum(Distadj))
 
-summary.trips.interp2<-ddply(summary.trips.interp1,.(ID,Status),summarize,NbTrips=length(DistmaxIndTrip),
-                             DistmaxInd=mean(DistmaxIndTrip),
-                             TripDurInd=mean(TripDurIndTrip),TotPathInd=mean(TotPathIndTrip))
-
-summary.trips.interp<-ddply(summary.trips.interp2,.(Status),summarize,
-                            NbTrip=mean(NbTrips),NbTripSE=std.error(NbTrips,na.rm=T),
-                            Distmax=mean(DistmaxInd),DistmaxSE=std.error(DistmaxInd,na.rm=T),
-                            TripDur=mean(TripDurInd),TripDurSE=std.error(TripDurInd,na.rm=T),
-                            TotPath=mean(TotPathInd),TotPathSE=std.error(TotPathInd,na.rm=T))
-```
-### Summary of clean interpolated trips by status
-
-The table shows the summary of trip characteristics with interpolated data from clean trips with a minimum distance of `r dist.thres`km, a minimum duration of `r dur.thres`, gaps of less than `r diff.thres` and a minimum of `r row.thres` number of locations to define a trip with a time resolution of `r reso` for interpolation.
-
-```{r, echo=F}
-
-kbl(summary.trips.interp) %>%
-  kable_styling(bootstrap_options = c("striped", "hover"))
 ```
 
 ### Statistics
 
-Linear mixed models are applied to test whether the trip variables are different between failed and successful breeders as well as power analyses.
+Linear mixed models are applied to test whether the trip variables are different between failed and successful breeders on the raw trips
 
 ```{r LMM, message=F}
-maxdist<-lmer(sqrt(DistmaxIndTrip) ~ Status + (1|ID),data=summary.trips.interp1)
-dur<-lmer(sqrt(TripDurIndTrip) ~ Status + (1|ID),data=summary.trips.interp1)
-totdist<-lmer(sqrt(TotPathIndTrip) ~ Status + (1|ID),data=summary.trips.interp1)
+maxdist<-lmer(sqrt(Distmax) ~ Status + (1|ID),data=raw.trips.2015)
+dur<-lmer(sqrt(TripDur) ~ Status + (1|ID),data=raw.trips.2015)
+totdist<-lmer(sqrt(TotalPath) ~ Status + (1|ID),data=raw.trips.2015)
 
 anova(maxdist)
 
