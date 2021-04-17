@@ -331,9 +331,9 @@ clean.trips.loc.2018<-rbind(clean.trips.suc.2018,clean.trips.fail.2018)
 #Number of gaps > 16min
 length(which(clean.trips.fail.2018$Difftime>16 ))/nrow(clean.trips.fail.2018)*100
 #Number of gaps > 20min
-length(which(clean.trips.loc.2015$Difftime>20))/nrow(clean.trips.loc.2015)*100
+length(which(clean.trips.loc.2018$Difftime>20))/nrow(clean.trips.loc.2018)*100
 #Number of gaps > 30min
-length(which(clean.trips.loc.2015$Difftime>30))/nrow(clean.trips.loc.2015)*100
+length(which(clean.trips.loc.2018$Difftime>30))/nrow(clean.trips.loc.2018)*100
 
 
  reso <- 20 * 60       #time resolution between 2 points in seconds
@@ -396,7 +396,7 @@ loc.interpolated.2018 <- subset(loc.interpolated.2018,
                                 strftime(loc.interpolated.2018$DateTime, "%H", tz="GMT") %in% duty.off)
 
 
-#save(loc.interpolated.2018,file="Data/NewlyCreatedData/clean_interp_loc_day_2018.RData")
+save(loc.interpolated.2018,file="Data/NewlyCreatedData/clean_interp_loc_day_2018.RData")
 
 
 raw.trips.2018<-raw_trips_summary_ind(ALL.2018)
