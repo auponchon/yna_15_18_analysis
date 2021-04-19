@@ -336,7 +336,7 @@ length(which(clean.trips.loc.2018$Difftime>20))/nrow(clean.trips.loc.2018)*100
 length(which(clean.trips.loc.2018$Difftime>30))/nrow(clean.trips.loc.2018)*100
 
 
- reso <- 20 * 60       #time resolution between 2 points in seconds
+ reso <- 15 * 60       #time resolution between 2 points in seconds
 
 new.trip<-NULL
 loc.interpolated.2018<-NULL
@@ -390,11 +390,6 @@ for (x in 1:length(id)){
 #create a new global dataset with interpolated data
 loc.interpolated.2018<-new.trip[,c("ID","Status","TravelNb","TravelID","DateTime","Longitude","Latitude",
                                    "Distmax","Difftime","Distadj")]
-duty.off<-c('5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21') 
-  
-loc.interpolated.2018 <- subset(loc.interpolated.2018,
-                                strftime(loc.interpolated.2018$DateTime, "%H", tz="GMT") %in% duty.off)
-
 
 save(loc.interpolated.2018,file="Data/NewlyCreatedData/clean_interp_loc_day_2018.RData")
 

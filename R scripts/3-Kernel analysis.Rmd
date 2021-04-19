@@ -1,0 +1,74 @@
+---
+title: "3-Kernels"
+author: "Aurore Ponchon"
+date: "20/10/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,message=FALSE, warning=FALSE)
+```
+
+## Kernel analysis
+
+
+```{r kernels 2015}
+load("loc_interpolated_states_2015.RData")
+load("loc_interpolated_states_day_2015.RData")
+
+library(fields)
+library(adehabitatHR)
+library(maptools)
+library(rgdal)
+library(raster)
+library(sf)
+
+#subset data for failed and successful breeders to plot paths
+loc.yna.fail<-subset(loc.interpolated.2015,loc.interpolated.2015$Status=="fail")
+loc.yna.suc<-subset(loc.interpolated.2015,loc.interpolated.2015$Status=="success")
+
+#create shapefiles paths
+sf_locs <- sf::st_as_sf(loc.yna.fail, coords = c("Longitude","Latitude")) %>% 
+  sf::st_set_crs(4326)
+
+sf_lines <- sf_locs %>%
+  dplyr::arrange(ID, DateTime) %>%
+  sf::st_geometry() %>%
+  sf::st_cast("MULTIPOINT",ids = as.integer(as.factor(sf_locs$ID))) %>%
+  sf::st_cast("MULTILINESTRING") %>%
+  sf::st_sf(ID = as.factor(unique(sf_locs$ID)))
+
+st_write(sf_lines,layer="Line_fail",dsn="Kernels",driver="ESRI Shapefile", delete_layer = TRUE,update=T)
+
+sf_locs <- sf::st_as_sf(loc.yna.suc, coords = c("Longitude","Latitude")) %>% 
+  sf::st_set_crs(4326)
+
+# sf_lines <- sf_locs %>% 
+#   dplyr::arrange(ID, DateTime) %>% 
+#   sf::st_geometry() %>% 
+#   sf::st_cast("MULTIPOINT",ids = as.integer(as.factor(sf_locs$ID))) %>% 
+#   sf::st_cast("MULTILINESTRING") %>% 
+#   sf::st_sf(ID = as.factor(unique(sf_locs$ID)))
+# 
+# st_write(sf_lines,layer="Line_success",dsn="Kernels",driver="ESRI Shapefile", delete_layer = TRUE,update=T)
+
+#subset data for failed and successful breeders for locations
+loc.yna.fail.day<-subset(loc.interpolated.day.2015,loc.interpolated.day.2015$Status=="fail")
+loc.yna.suc.day<-subset(loc.interpolated.day.2015,loc.interpolated.day.2015$Status=="success")
+
+coordinates(loc.yna.fail.day)<-c("Longitude","Latitude")
+proj4string(loc.yna.fail.day) <- CRS("+proj=longlat +ellps=WGS84")
+
+loc.yna.fail.day<-spTransform(loc.yna.fail.day, CRS("+proj=utm +zone=45 +ellps=WGS84"))
+writeOGR(loc.yna.fail.day, dsn="Data/NewlyCreatedData/Shapefiles",
+         layer="Locations_failed_behav_day", driver="ESRI Shapefile",overwrite_layer=T)
+
+coordinates(loc.yna.suc)<-c("Longitude","Latitude")
+proj4string(loc.yna.suc) <- CRS("+proj=longlat +ellps=WGS84")
+loc.yna.suc<-spTransform(loc.yna.suc, CRS("+proj=utm +zone=45 +ellps=WGS84"))
+
+writeOGR(loc.yna.suc, dsn="Kernels",
+         layer="Locations_success_behav", driver="ESRI Shapefile",overwrite_layer=T)
+
+
+```
