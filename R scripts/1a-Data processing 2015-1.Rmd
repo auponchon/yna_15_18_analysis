@@ -1,5 +1,5 @@
 ---
-title: "1b-GPS Data processing 2015"
+title: "1a-GPS Data processing 2015"
 author: "Aurore Ponchon"
 date: "26/04/2019"
 output: html_document
@@ -27,6 +27,7 @@ library(pastecs)
 library(kableExtra)
 library(plyr)
 library(lme4)
+library(afex)
 library(simr)
 source("R scripts/Functions.R")
 
@@ -311,7 +312,7 @@ loc.interpolated.2015<-new.trip[,c("ID","Status","TravelNb","TravelID","DateTime
                                    "Distmax","Difftime","Distadj")]
 
 
-save(loc.interpolated.2015,file="Data/NewlyCreatedData/clean_interp_loc_day_2015.RData")
+save(loc.interpolated.2015,file="Data/NewlyCreatedData/clean_interp_loc_2015.RData")
 ```
 
 ### Statistics

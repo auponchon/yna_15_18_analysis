@@ -18,20 +18,18 @@ Best set of parameters are determined based on the highest negative lihelihood.
 ### Fitting a HMM on 2015 data
 
 ```{r HMM test 2015, eval=F}
-load("Data/NewlyCreatedData/clean_interp_loc_day_2015.RData")
+load("Data/NewlyCreatedData/clean_interp_loc_2015.RData")
 
 library(moveHMM)
 
 essai.2015<-loc.interpolated.2015
 #get a travelID by day
-essai.2015$ID<-paste(essai.2015$TravelID,
-                           strftime(loc.interpolated.2015$DateTime, "%d", tz="UTC"),
-                           sep=".")
+essai.2015$ID<-essai.2015$TravelID
 
 proc.essai<-prepData(essai.2015,type="LL",
                      coordNames=c("Longitude","Latitude")) #step in km if LL, m if UTM
 
-par(mdrow=c(1,2))
+par(mfrow=c(1,2))
 hist(proc.essai$step)
 hist(proc.essai$angle)
 
@@ -41,52 +39,37 @@ hist(proc.essai$angle)
  mles<-vector("numeric",length=nruns)
 
  #test for von mise distribution for angle concentrations
-for (foo in 1:nruns){
-  print(foo)
-  mu0<-sort(c(runif(1,0.3,10),runif(1,1,20),runif(1,5,30)) ) # means for step length
-  sigma0<-c(runif(1,0.3,10),runif(1,0.3,30),runif(1,0.3,10))  #sd for step length
-  zeromass0<-runif(3,0,0.01)
-  stepPar0<-c(mu0,sigma0,zeromass0)  #joint object for step length
-  angleMean0<-sample(c(0,pi),size=3,replace=T)   #mean for turning angle
-  kappa0<-runif(3,0,5)  # angle concentration
-  anglePar0<-c(angleMean0,kappa0)
+# for (foo in 1:nruns){
+#   print(foo)
+#   mu0<-sort(c(runif(1,0.3,10),runif(1,1,20),runif(1,5,30)) ) # means for step length
+#   sigma0<-c(runif(1,0.3,10),runif(1,0.3,30),runif(1,0.3,10))  #sd for step length
+#   zeromass0<-runif(3,0,0.01)
+#   stepPar0<-c(mu0,sigma0,zeromass0)  #joint object for step length
+#   angleMean0<-sample(c(0,pi),size=3,replace=T)   #mean for turning angle
+#   kappa0<-runif(3,0,5)  # angle concentration
+#   anglePar0<-c(angleMean0,kappa0)
+# 
+#   print(c(stepPar0,anglePar0))
+# 
+#   m0<-fitHMM(data=proc.essai,nbStates=3,stepPar0=stepPar0,anglePar0=anglePar0,
+#              formula=~1,angleDist="vm")
+#   mles[foo]<--m0$mod$minimum
+# 
+#   print( mles[foo])
+# }
+# 
+# table(round(mles))
 
-  print(c(stepPar0,anglePar0))
-
-  m0<-fitHMM(data=proc.essai,nbStates=3,stepPar0=stepPar0,anglePar0=anglePar0,
-             formula=~1,angleDist="vm")
-  mles[foo]<--m0$mod$minimum
-
-  print( mles[foo])
-}
-
-table(round(mles))
-
-#lowest likelihood: -9345 with wrpcauchy
-#parameters: 
+#lowest likelihood: -19711.51 with von mise
+#parameters:  mu0<-c(2.5,4.20,17.01)
+  #sigma0<-c(2.65,10.47,7.25)  #sd for step length
+  #zeromass0<-c(0.0087,0.0025,0.0079)
+ # angleMean0<-c(0,3.14,0)   #mean for turning angle
+ # kappa0<-c(4.63,3.10,3.22)
 
  #test for wrapped cauchy for angle concentrations
-for (foo in 1:nruns){
-  print(foo)
-  mu0<-sort(c(runif(1,0.3,10),runif(1,1,20),runif(1,5,30)) ) # means for step length
-  sigma0<-c(runif(1,0.3,10),runif(1,0.3,30),runif(1,0.3,10))  #sd for step length
-  zeromass0<-runif(3,0,0.01)
-  stepPar0<-c(mu0,sigma0,zeromass0)  #joint object for step length
-  angleMean0<-sample(c(0,pi),size=3,replace=T)   #mean for turning angle
-  kappa0<-runif(3,0,5)  # angle concentration
-  anglePar0<-c(angleMean0,kappa0)
 
-  print(c(stepPar0,anglePar0))
-
-  m0<-fitHMM(data=proc.essai,nbStates=3,stepPar0=stepPar0,anglePar0=anglePar0,
-             formula=~1,angleDist="wrpcauchy")
-  mles[foo]<--m0$mod$minimum
-
-  print( mles[foo])
-}
-
-table(round(mles))
-#lowest likelihood: -9595.762 with wrpcauchy
+ #lowest likelihood: -9595.762 with wrpcauchy
 #parameters: 
 ```
 
@@ -126,7 +109,7 @@ save(loc.interpolated.day.2015,file="Data/NewlyCreatedData/loc_interpolated_stat
 ### Fitting HMM on 2018 data
 
 ```{r HMM test 2018, eval=F}
-load("Data/NewlyCreatedData/clean_interp_loc_day_2018.RData")
+load("Data/NewlyCreatedData/clean_interp_loc_2018.RData")
 
 
 essai.2018<-loc.interpolated.2018

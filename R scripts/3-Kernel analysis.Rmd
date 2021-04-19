@@ -9,12 +9,13 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE,message=FALSE, warning=FALSE)
 ```
 
-## Kernel analysis
+## Extracting locations and paths for each selected trip for 2015
 
+Paths are extracted based on all interpolated trips inlcudig night time data. On the contrary, poinst are extracted based on data for daylight only.
 
 ```{r kernels 2015}
-load("loc_interpolated_states_2015.RData")
-load("loc_interpolated_states_day_2015.RData")
+load("Data/NewlyCreatedData/loc_interpolated_states_2015.RData")
+load("Data/NewlyCreatedData/loc_interpolated_states_day_2015.RData")
 
 library(fields)
 library(adehabitatHR)
@@ -38,19 +39,21 @@ sf_lines <- sf_locs %>%
   sf::st_cast("MULTILINESTRING") %>%
   sf::st_sf(ID = as.factor(unique(sf_locs$ID)))
 
-st_write(sf_lines,layer="Line_fail",dsn="Kernels",driver="ESRI Shapefile", delete_layer = TRUE,update=T)
+st_write(sf_lines,layer="Line_fail",dsn="Data/NewlyCreatedData/Shapefiles",
+         driver="ESRI Shapefile", delete_layer = TRUE,update=T)
 
 sf_locs <- sf::st_as_sf(loc.yna.suc, coords = c("Longitude","Latitude")) %>% 
   sf::st_set_crs(4326)
 
-# sf_lines <- sf_locs %>% 
-#   dplyr::arrange(ID, DateTime) %>% 
-#   sf::st_geometry() %>% 
-#   sf::st_cast("MULTIPOINT",ids = as.integer(as.factor(sf_locs$ID))) %>% 
-#   sf::st_cast("MULTILINESTRING") %>% 
-#   sf::st_sf(ID = as.factor(unique(sf_locs$ID)))
-# 
-# st_write(sf_lines,layer="Line_success",dsn="Kernels",driver="ESRI Shapefile", delete_layer = TRUE,update=T)
+sf_lines <- sf_locs %>%
+  dplyr::arrange(ID, DateTime) %>%
+  sf::st_geometry() %>%
+  sf::st_cast("MULTIPOINT",ids = as.integer(as.factor(sf_locs$ID))) %>%
+  sf::st_cast("MULTILINESTRING") %>%
+  sf::st_sf(ID = as.factor(unique(sf_locs$ID)))
+
+st_write(sf_lines,layer="Line_success",dsn="Data/NewlyCreatedData/Shapefiles",
+driver="ESRI Shapefile", delete_layer = TRUE,update=T)
 
 #subset data for failed and successful breeders for locations
 loc.yna.fail.day<-subset(loc.interpolated.day.2015,loc.interpolated.day.2015$Status=="fail")
@@ -63,12 +66,42 @@ loc.yna.fail.day<-spTransform(loc.yna.fail.day, CRS("+proj=utm +zone=45 +ellps=W
 writeOGR(loc.yna.fail.day, dsn="Data/NewlyCreatedData/Shapefiles",
          layer="Locations_failed_behav_day", driver="ESRI Shapefile",overwrite_layer=T)
 
-coordinates(loc.yna.suc)<-c("Longitude","Latitude")
-proj4string(loc.yna.suc) <- CRS("+proj=longlat +ellps=WGS84")
-loc.yna.suc<-spTransform(loc.yna.suc, CRS("+proj=utm +zone=45 +ellps=WGS84"))
+coordinates(loc.yna.suc.day)<-c("Longitude","Latitude")
+proj4string(loc.yna.suc.day) <- CRS("+proj=longlat +ellps=WGS84")
+loc.yna.suc.day<-spTransform(loc.yna.suc.day, CRS("+proj=utm +zone=45 +ellps=WGS84"))
 
-writeOGR(loc.yna.suc, dsn="Kernels",
-         layer="Locations_success_behav", driver="ESRI Shapefile",overwrite_layer=T)
+writeOGR(loc.yna.suc.day, dsn="Data/NewlyCreatedData/Shapefiles",
+         layer="Locations_success_behav_day", driver="ESRI Shapefile",overwrite_layer=T)
+```
 
+## Calculation UD kernels for each group in 2015
+
+Smoothing factor ***h*** is fixed and common to all grops both in 2015 and 2018.
+
+```{r kernels 2015}
+
+    KUD.fail <- kernelUD(loc.yna.fail.day[,2],same4all=T,h="href",grid=1000)
+    KUDvol.fail <- getvolumeUD(KUD.fail)
+    ver90.fail<-getverticeshr(KUDvol.fail ,90)
+    ver50.fail<-getverticeshr(KUDvol.fail ,50)
+    
+     KUD.suc <- kernelUD(loc.yna.suc.day[,2],same4all=T,h="href",grid=1000)
+    KUDvol.suc <- getvolumeUD(KUD.suc)
+    ver90.suc<-getverticeshr(KUDvol.suc ,90)
+    #verhref75.fec<-getverticeshr(KUDvol.fec ,75)
+    ver50.suc<-getverticeshr(KUDvol.suc ,50)
+    
+    # 
+    writeOGR(ver90.fail, dsn="Data/NewlyCreatedData/Shapefiles",
+             layer="KUD_90_fail_day_for", driver="ESRI Shapefile",overwrite_layer=T)
+    writeOGR(ver90.suc, dsn="Data/NewlyCreatedData/Shapefiles",
+             layer="KUD_90_suc_day_for", driver="ESRI Shapefile",overwrite_layer=T)
+     writeOGR(ver50.fail, dsn="Data/NewlyCreatedData/Shapefiles",driver="ESRI Shapefile",
+             layer="KUD_50_fail_day_for",overwrite_layer=T)
+     writeOGR(ver50.suc, dsn="Data/NewlyCreatedData/Shapefiles",driver="ESRI Shapefile",
+              layer="KUD_50_suc_day_for",overwrite_layer=T)
+     
+     
 
 ```
+

@@ -391,7 +391,7 @@ for (x in 1:length(id)){
 loc.interpolated.2018<-new.trip[,c("ID","Status","TravelNb","TravelID","DateTime","Longitude","Latitude",
                                    "Distmax","Difftime","Distadj")]
 
-save(loc.interpolated.2018,file="Data/NewlyCreatedData/clean_interp_loc_day_2018.RData")
+save(loc.interpolated.2018,file="Data/NewlyCreatedData/clean_interp_loc_2018.RData")
 
 
 raw.trips.2018<-raw_trips_summary_ind(ALL.2018)
