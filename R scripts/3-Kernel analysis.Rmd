@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE,message=FALSE, warning=FALSE)
 
 Paths are extracted based on all interpolated trips inlcudig night time data. On the contrary, poinst are extracted based on data for daylight only.
 
-```{r kernels 2015}
+```{r paths and points 2015}
 load("Data/NewlyCreatedData/loc_interpolated_states_2015.RData")
 load("Data/NewlyCreatedData/loc_interpolated_states_day_2015.RData")
 
@@ -39,7 +39,7 @@ sf_lines <- sf_locs %>%
   sf::st_cast("MULTILINESTRING") %>%
   sf::st_sf(ID = as.factor(unique(sf_locs$ID)))
 
-st_write(sf_lines,layer="Line_fail",dsn="Data/NewlyCreatedData/Shapefiles",
+st_write(sf_lines,layer="Line_fail_2015",dsn="Data/NewlyCreatedData/Shapefiles",
          driver="ESRI Shapefile", delete_layer = TRUE,update=T)
 
 sf_locs <- sf::st_as_sf(loc.yna.suc, coords = c("Longitude","Latitude")) %>% 
@@ -52,26 +52,26 @@ sf_lines <- sf_locs %>%
   sf::st_cast("MULTILINESTRING") %>%
   sf::st_sf(ID = as.factor(unique(sf_locs$ID)))
 
-st_write(sf_lines,layer="Line_success",dsn="Data/NewlyCreatedData/Shapefiles",
+st_write(sf_lines,layer="Line_success_2015",dsn="Data/NewlyCreatedData/Shapefiles",
 driver="ESRI Shapefile", delete_layer = TRUE,update=T)
 
 #subset data for failed and successful breeders for locations
 loc.yna.fail.day<-subset(loc.interpolated.day.2015,loc.interpolated.day.2015$Status=="fail")
-loc.yna.suc.day<-subset(loc.interpolated.day.2015,loc.interpolated.day.2015$Status=="success")
-
+droplevels(loc.yna.fail.day)
 coordinates(loc.yna.fail.day)<-c("Longitude","Latitude")
 proj4string(loc.yna.fail.day) <- CRS("+proj=longlat +ellps=WGS84")
-
 loc.yna.fail.day<-spTransform(loc.yna.fail.day, CRS("+proj=utm +zone=45 +ellps=WGS84"))
 writeOGR(loc.yna.fail.day, dsn="Data/NewlyCreatedData/Shapefiles",
-         layer="Locations_failed_behav_day", driver="ESRI Shapefile",overwrite_layer=T)
+         layer="Locations_failed_behav_day_2015", driver="ESRI Shapefile",overwrite_layer=T)
 
+loc.yna.suc.day<-subset(loc.interpolated.day.2015,loc.interpolated.day.2015$Status=="success")
+droplevels(loc.yna.suc.day)
 coordinates(loc.yna.suc.day)<-c("Longitude","Latitude")
 proj4string(loc.yna.suc.day) <- CRS("+proj=longlat +ellps=WGS84")
 loc.yna.suc.day<-spTransform(loc.yna.suc.day, CRS("+proj=utm +zone=45 +ellps=WGS84"))
 
 writeOGR(loc.yna.suc.day, dsn="Data/NewlyCreatedData/Shapefiles",
-         layer="Locations_success_behav_day", driver="ESRI Shapefile",overwrite_layer=T)
+         layer="Locations_success_behav_day_2015", driver="ESRI Shapefile",overwrite_layer=T)
 ```
 
 ## Calculation UD kernels for each group in 2015
@@ -79,8 +79,14 @@ writeOGR(loc.yna.suc.day, dsn="Data/NewlyCreatedData/Shapefiles",
 Smoothing factor ***h*** is fixed and common to all grops both in 2015 and 2018.
 
 ```{r kernels 2015}
+#loc.yna<-loc.interpolated.day.2015[loc.interpolated.day.2015$States=="1"|
+#                                       loc.interpolated.day.2015$States=="2",]
 
-    KUD.fail <- kernelUD(loc.yna.fail.day[,2],same4all=T,h="href",grid=1000)
+loc.yna.fail<-subset(loc.yna,loc.yna$Status=="fail")
+loc.yna.suc<-subset(loc.yna,loc.yna$Status=="success")
+loc.yna.fail<-droplevels(loc.yna.fail)
+loc.yna.suc<-droplevels(loc.yna.suc)
+    KUD.fail <- kernelUD(loc.yna.fail.day[,1],same4all=T,h="href",grid=1000)
     KUDvol.fail <- getvolumeUD(KUD.fail)
     ver90.fail<-getverticeshr(KUDvol.fail ,90)
     ver50.fail<-getverticeshr(KUDvol.fail ,50)
@@ -102,6 +108,60 @@ Smoothing factor ***h*** is fixed and common to all grops both in 2015 and 2018.
               layer="KUD_50_suc_day_for",overwrite_layer=T)
      
      
+
+```
+
+```{r paths and points 2018}
+#subset data for failed and successful breeders to plot paths
+loc.yna.fail<-subset(loc.interpolated.2018,loc.interpolated.2018$Status=="fail")
+loc.yna.suc<-subset(loc.interpolated.2018,loc.interpolated.2018$Status=="success")
+
+#create shapefiles paths
+sf_locs <- sf::st_as_sf(loc.yna.fail, coords = c("Longitude","Latitude")) %>% 
+  sf::st_set_crs(4326)
+
+sf_lines <- sf_locs %>%
+  dplyr::arrange(ID, DateTime) %>%
+  sf::st_geometry() %>%
+  sf::st_cast("MULTIPOINT",ids = as.integer(as.factor(sf_locs$ID))) %>%
+  sf::st_cast("MULTILINESTRING") %>%
+  sf::st_sf(ID = as.factor(unique(sf_locs$ID)))
+
+st_write(sf_lines,layer="Line_fail_2018",dsn="Data/NewlyCreatedData/Shapefiles",
+         driver="ESRI Shapefile", delete_layer = TRUE,update=T)
+
+sf_locs <- sf::st_as_sf(loc.yna.suc, coords = c("Longitude","Latitude")) %>% 
+  sf::st_set_crs(4326)
+
+sf_lines <- sf_locs %>%
+  dplyr::arrange(ID, DateTime) %>%
+  sf::st_geometry() %>%
+  sf::st_cast("MULTIPOINT",ids = as.integer(as.factor(sf_locs$ID))) %>%
+  sf::st_cast("MULTILINESTRING") %>%
+  sf::st_sf(ID = as.factor(unique(sf_locs$ID)))
+
+st_write(sf_lines,layer="Line_success_2018",dsn="Data/NewlyCreatedData/Shapefiles",
+driver="ESRI Shapefile", delete_layer = TRUE,update=T)
+
+#subset data for failed and successful breeders for locations
+loc.yna.fail.day<-subset(loc.interpolated.day.2018,loc.interpolated.day.2018$Status=="fail")
+droplevels(loc.yna.fail.day)
+coordinates(loc.yna.fail.day)<-c("Longitude","Latitude")
+proj4string(loc.yna.fail.day) <- CRS("+proj=longlat +ellps=WGS84")
+loc.yna.fail.day<-spTransform(loc.yna.fail.day, CRS("+proj=utm +zone=45 +ellps=WGS84"))
+writeOGR(loc.yna.fail.day, dsn="Data/NewlyCreatedData/Shapefiles",
+         layer="Locations_failed_behav_day_2018", driver="ESRI Shapefile",overwrite_layer=T)
+
+loc.yna.suc.day<-subset(loc.interpolated.day.2018,loc.interpolated.day.2018$Status=="success")
+droplevels(loc.yna.suc.day)
+coordinates(loc.yna.suc.day)<-c("Longitude","Latitude")
+proj4string(loc.yna.suc.day) <- CRS("+proj=longlat +ellps=WGS84")
+loc.yna.suc.day<-spTransform(loc.yna.suc.day, CRS("+proj=utm +zone=45 +ellps=WGS84"))
+
+writeOGR(loc.yna.suc.day, dsn="Data/NewlyCreatedData/Shapefiles",
+         layer="Locations_success_behav_day_2018", driver="ESRI Shapefile",overwrite_layer=T)
+```
+
 
 ```
 
