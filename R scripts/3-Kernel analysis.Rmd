@@ -79,24 +79,17 @@ writeOGR(loc.yna.suc.day, dsn="Data/NewlyCreatedData/Shapefiles",
 Smoothing factor ***h*** is fixed and common to all grops both in 2015 and 2018.
 
 ```{r kernels 2015}
-#loc.yna<-loc.interpolated.day.2015[loc.interpolated.day.2015$States=="1"|
-#                                       loc.interpolated.day.2015$States=="2",]
+loc.yna<-loc.interpolated.day.2015[loc.interpolated.day.2015$States=="1"|
+                                       loc.interpolated.day.2015$States=="2",]
+coordinates(loc.yna)<-c("Longitude","Latitude")
+proj4string(loc.yna) <- CRS("+proj=longlat +ellps=WGS84")
+loc.yna<-spTransform(loc.yna, CRS("+proj=utm +zone=45 +ellps=WGS84"))
 
-loc.yna.fail<-subset(loc.yna,loc.yna$Status=="fail")
-loc.yna.suc<-subset(loc.yna,loc.yna$Status=="success")
-loc.yna.fail<-droplevels(loc.yna.fail)
-loc.yna.suc<-droplevels(loc.yna.suc)
-    KUD.fail <- kernelUD(loc.yna.fail.day[,1],same4all=T,h="href",grid=1000)
-    KUDvol.fail <- getvolumeUD(KUD.fail)
-    ver90.fail<-getverticeshr(KUDvol.fail ,90)
-    ver50.fail<-getverticeshr(KUDvol.fail ,50)
-    
-     KUD.suc <- kernelUD(loc.yna.suc.day[,2],same4all=T,h="href",grid=1000)
-    KUDvol.suc <- getvolumeUD(KUD.suc)
-    ver90.suc<-getverticeshr(KUDvol.suc ,90)
-    #verhref75.fec<-getverticeshr(KUDvol.fec ,75)
-    ver50.suc<-getverticeshr(KUDvol.suc ,50)
-    
+ KUD<- kernelUD(loc.yna[,2],same4all=T,h=50000,grid=1000)
+    KUDvol <- getvolumeUD(KUD)
+    ver90<-getverticeshr(KUDvol ,90)
+    ver50<-getverticeshr(KUDvol ,50)
+
     # 
     writeOGR(ver90.fail, dsn="Data/NewlyCreatedData/Shapefiles",
              layer="KUD_90_fail_day_for", driver="ESRI Shapefile",overwrite_layer=T)
