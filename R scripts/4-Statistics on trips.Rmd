@@ -69,6 +69,37 @@ anova(modl4,modl41)
 anova(modl41)
 ```
 
+##Statistical analysis on at-sea behavioural states
+
+```{r}
+load("Data/NewlyCreatedData/loc_interpolated_states_day_2015.RData")
+load("Data/NewlyCreatedData/loc_interpolated_states_day_2018.RData")
+
+behav15<-ddply(loc.interpolated,.(ID,Status,TravelNb,States),summarize,
+               SumDur=sum(Difftime))
+
+trip15<-ddply(loc.interpolated,.(ID,Status,TravelNb),summarize,
+              TotDur=sum(Difftime))
+
+behav15<-merge(behav15,trip15,by=c("ID","Status","TravelNb"))
+behav15$Prop<-behav15$SumDur/behav15$TotDur*100
+behav15$Year<-2015
+
+behav18<-ddply(loc.interpolated.2018,.(ID,Status,TravelNb,States),summarize,
+               SumDur=sum(Difftime))
+
+trip18<-ddply(loc.interpolated.2018,.(ID,Status,TravelNb),summarize,
+              TotDur=sum(Difftime))
+
+behav18<-merge(behav18,trip18,by=c("ID","Status","TravelNb"))
+behav18$Prop<-behav18$SumDur/behav18$TotDur*100
+behav18$Year<-2018
+
+
+
+```
+
+
 ## Plots with trip characteristics
 
 ```{r plots of trips characteristics ,fig.height=8,fig.width=15,dpi=400}

@@ -25,6 +25,10 @@ library(maptools)
 library(rgdal)
 library(raster)
 library(sf)
+library(geosphere)
+library(plyr)
+library(ggplot2)
+library(viridis)
 
 #subset data for failed and successful breeders to plot paths
 loc.yna.fail.2015<-subset(loc.interpolated.2015,loc.interpolated.2015$Status=="fail")
@@ -82,7 +86,7 @@ Smoothing factor ***h*** is fixed and common to all groups both in 2015 and 2018
 
 ```{r kernels 2015}
 loc.2015<-loc.interpolated.day.2015[loc.interpolated.day.2015$States=="1"|
-                                       loc.interpolated.day.2015$States=="2",]
+                                       loc.interpolated.day.2015$States=="3",]
 
 coordinates(loc.2015)<-c("Longitude","Latitude")
 proj4string(loc.2015) <- CRS("+proj=longlat +ellps=WGS84")
@@ -104,6 +108,16 @@ loc.2015<-spTransform(loc.2015, CRS("+proj=utm +zone=45 +ellps=WGS84"))
              layer="KUD_90_day_fail_for_2015", driver="ESRI Shapefile",overwrite_layer=T)
     writeOGR(ver50.fail.2015, dsn="Data/NewlyCreatedData/Shapefiles",
              layer="KUD_50_day_fail_for_2015", driver="ESRI Shapefile",overwrite_layer=T)
+ 
+    #Data for habitat modelling     
+ loc.dat.2015<-loc.interpolated.day.2015[loc.interpolated.day.2015$States=="1"|
+                                        loc.interpolated.day.2015$States=="3",]
+ 
+ loc.2015.fail<-subset(loc.dat.2015,loc.dat.2015$Status=="fail")
+ loc.2015.suc<-subset(loc.dat.2015,loc.dat.2015$Status=="success")
+  
+save(loc.2015.fail,file="Data/NewlyCreatedData/ForRestLocFail2015.RData")
+save(loc.2015.suc,file="Data/NewlyCreatedData/ForRestLocSuccess2015.RData")
 ```
 
 ### Extracting locations and paths for each selected trip for 2018
@@ -169,7 +183,7 @@ Smoothing factor ***h*** is fixed and common to all groups both in 2015 and 2018
 ```{r kernels 2018}
 
 loc.2018<-loc.interpolated.day.2018[loc.interpolated.day.2018$States=="1"|
-                                       loc.interpolated.day.2018$States=="2",]
+                                       loc.interpolated.day.2018$States=="3",]
 
 coordinates(loc.2018)<-c("Longitude","Latitude")
 proj4string(loc.2018) <- CRS("+proj=longlat +ellps=WGS84")
@@ -191,32 +205,37 @@ loc.2018<-spTransform(loc.2018, CRS("+proj=utm +zone=45 +ellps=WGS84"))
              layer="KUD_90_day_fail_for_2018", driver="ESRI Shapefile",overwrite_layer=T)
     writeOGR(ver50.fail.2018, dsn="Data/NewlyCreatedData/Shapefiles",
              layer="KUD_50_day_fail_for_2018", driver="ESRI Shapefile",overwrite_layer=T)
+
+    #Data for habitat modelling
+loc.dat.2018<-loc.interpolated.day.2018[loc.interpolated.day.2018$States=="1"|
+                                       loc.interpolated.day.2018$States=="3",]
+
+loc.2018.fail<-subset(loc.dat.2018,loc.dat.2018$Status=="fail")
+loc.2018.suc<-subset(loc.dat.2018,loc.dat.2018$Status=="success")
+
+save(loc.2018.fail,file="Data/NewlyCreatedData/ForRestLocFail2018.RData")
+save(loc.2018.suc,file="Data/NewlyCreatedData/ForRestLocSuccess2018.RData")
 ```
 
 ```{r Map kernel 2015 and 2018, echo=FALSE, fig.width=15,fig.height=8}
 par(mfrow=c(1,2))
 
-plot(ver90.fail.2015,col="pink", border="pink",
+plot(ver90.fail.2015,col="yellow", border="yellow",
      main="Kernel UD 2015")
-plot(ver90.suc.2015,col="yellow", border="yellow",add=T)
-plot(ver50.suc.2015,col="orange", border="orange",add=T)
-plot(ver50.fail.2015,col="purple", border="purple",add=T)
+plot(ver90.suc.2015,col="pink", border="pink",add=T)
+plot(ver50.suc.2015,col="purple", border="purple",add=T)
+plot(ver50.fail.2015,col="orange", border="orange",add=T)
 
-plot(ver90.fail.2018,col="pink", border="pink",
+plot(ver90.fail.2018,col="yellow", border="yellow",
      main="Kernel UD 2018")
-plot(ver90.suc.2018,col="yellow", border="yellow",add=T)
-plot(ver50.suc.2018,col="orange", border="orange",add=T)
-plot(ver50.fail.2018,col="purple", border="purple",add=T)
+plot(ver90.suc.2018,col="pink", border="pink",add=T)
+plot(ver50.suc.2018,col="purple", border="purple",add=T)
+plot(ver50.fail.2018,col="orange", border="orange",add=T)
 ```
 
 ## Calculating and plotting bearing
 
 ```{r Bearing, fig.height=7, fig.width=15, dpi=400}
-library(geosphere)
-library(plyr)
-library(ggplot2)
-library(viridis)
-
 load("Data/NewlyCreatedData/loc_interpolated_states_day_2015.RData")
 loc.yna.2015<-loc.interpolated.day.2015
 
@@ -224,7 +243,7 @@ colony<-data.frame(Longitude =77.52356,Latitude=-37.8545)
 loc.yna.2015$bearing<-(bearing(loc.yna.2015[,c("Longitude","Latitude")],colony,f=0))+180
 loc.yna.2015$Status<-revalue(loc.yna.2015$Status,c("fail" = "Fail 2015", 
                                          "success" = "Success 2015"))
-loc.yna.2015<-subset(loc.yna.2015,loc.yna.2015$States=="1"| loc.yna.2015$States=="2")
+loc.yna.2015<-subset(loc.yna.2015,loc.yna.2015$States=="1"| loc.yna.2015$States=="3")
 mycols<-inferno(2,begin=0.35,end=0.8)
 
 brk<-seq(0,360,30)
@@ -241,17 +260,10 @@ g1<-ggplot(loc.yna.2015, aes(x = bearing,fill=Status)) +
   
   print(g1)  
 
-loc.fail.2015<-subset(loc.yna.2015,loc.yna.2015$Status=="fail")
-loc.suc.2015<-subset(loc.yna.2015,loc.yna.2015$Status=="success")
-  
-save(loc.fail.2015,"Data/NewlyCreatedData/ForRestLocFail2015.RData")
-save(loc.suc.2015,"Data/NewlyCreatedData/ForRestLocSuccess2015.RData")
- 
-rm(loc.fail.2015,loc.suc.2015)
-
-   # tiff("Figures/Rose_diagram_2015.tif", width=12,height=7,res=500,units="cm",compression="lzw")
- # print(g1)
- # dev.off()
+# 
+#     tiff("Figures/Rose_diagram_2015.tif", width=12,height=7,res=500,units="cm",compression="lzw")
+#   print(g1)
+#   dev.off()
 
 #2018  
 load("Data/NewlyCreatedData/loc_interpolated_states_day_2018.RData")
@@ -263,7 +275,7 @@ colony<-data.frame(Longitude =77.52356,Latitude=-37.8545)
 loc.yna.2018$bearing<-(bearing(loc.yna.2018[,c("Longitude","Latitude")],colony,f=0))+180
 loc.yna.2018$Status<-revalue(loc.yna.2018$Status,c("fail" = "Fail 2018", 
                                          "success" = "Success 2018"))
-loc.yna.2018<-subset(loc.yna.2018,loc.yna.2018$States=="1"| loc.yna.2018$States=="2")
+loc.yna.2018<-subset(loc.yna.2018,loc.yna.2018$States=="1"| loc.yna.2018$States=="3")
 
 g2<-ggplot(loc.yna.2018, aes(x = bearing,fill=Status)) +
   geom_histogram( color = "gray10",breaks=brk) +
@@ -277,19 +289,10 @@ g2<-ggplot(loc.yna.2018, aes(x = bearing,fill=Status)) +
     axis.title = element_blank())
   
   print(g2)
+# 
+  #   tiff("Figures/Rose_diagram_2018.tif", width=12,height=7,res=500,units="cm",compression="lzw")
+  # print(g2)
+  # dev.off()
 
- #   tiff("Figures/Rose_diagram_2018.tif", width=12,height=7,res=500,units="cm",compression="lzw")
- # print(g2)
- # dev.off()
-
-  loc.fail.2018<-subset(loc.yna.2018,loc.yna.2018$Status=="fail")
-loc.suc.2018<-subset(loc.yna.2018,loc.yna.2018$Status=="success")
-  
-save(loc.fail.2018,"Data/NewlyCreatedData/ForRestLocFail2018.RData")
-save(loc.suc.2018,"Data/NewlyCreatedData/ForRestLocSuccess2018.RData")
- 
-rm(loc.fail.2018,loc.suc.2018)
-
-  
 ```
 
