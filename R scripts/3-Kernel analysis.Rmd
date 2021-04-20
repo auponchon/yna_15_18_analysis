@@ -218,17 +218,17 @@ library(ggplot2)
 library(viridis)
 
 load("Data/NewlyCreatedData/loc_interpolated_states_day_2015.RData")
-loc.yna<-loc.interpolated.day.2015
+loc.yna.2015<-loc.interpolated.day.2015
 
 colony<-data.frame(Longitude =77.52356,Latitude=-37.8545)
-loc.yna$bearing<-(bearing(loc.yna[,c("Longitude","Latitude")],colony,f=0))+180
-loc.yna$Status<-revalue(loc.yna$Status,c("fail" = "Fail 2015", 
+loc.yna.2015$bearing<-(bearing(loc.yna.2015[,c("Longitude","Latitude")],colony,f=0))+180
+loc.yna.2015$Status<-revalue(loc.yna.2015$Status,c("fail" = "Fail 2015", 
                                          "success" = "Success 2015"))
-loc.yna<-subset(loc.yna,loc.yna$States=="1"| loc.yna$States=="2")
+loc.yna.2015<-subset(loc.yna.2015,loc.yna.2015$States=="1"| loc.yna.2015$States=="2")
 mycols<-inferno(2,begin=0.35,end=0.8)
 
 brk<-seq(0,360,30)
-g1<-ggplot(loc.yna, aes(x = bearing,fill=Status)) +
+g1<-ggplot(loc.yna.2015, aes(x = bearing,fill=Status)) +
   geom_histogram( color = "gray10",breaks=brk) +
   scale_x_continuous(breaks = seq(0, 360, 30),limits=c(0,360)) +
   scale_fill_manual(values = mycols) +
@@ -241,6 +241,14 @@ g1<-ggplot(loc.yna, aes(x = bearing,fill=Status)) +
   
   print(g1)  
 
+loc.fail.2015<-subset(loc.yna.2015,loc.yna.2015$Status=="fail")
+loc.suc.2015<-subset(loc.yna.2015,loc.yna.2015$Status=="success")
+  
+save(loc.fail.2015,"Data/NewlyCreatedData/ForRestLocFail2015.RData")
+save(loc.suc.2015,"Data/NewlyCreatedData/ForRestLocSuccess2015.RData")
+ 
+rm(loc.fail.2015,loc.suc.2015)
+
    # tiff("Figures/Rose_diagram_2015.tif", width=12,height=7,res=500,units="cm",compression="lzw")
  # print(g1)
  # dev.off()
@@ -248,16 +256,16 @@ g1<-ggplot(loc.yna, aes(x = bearing,fill=Status)) +
 #2018  
 load("Data/NewlyCreatedData/loc_interpolated_states_day_2018.RData")
 
-loc.yna<-loc.interpolated.day.2018
+loc.yna.2018<-loc.interpolated.day.2018
 colony<-data.frame(Longitude =77.52356,Latitude=-37.8545)
 
 
-loc.yna$bearing<-(bearing(loc.yna[,c("Longitude","Latitude")],colony,f=0))+180
-loc.yna$Status<-revalue(loc.yna$Status,c("fail" = "Fail 2018", 
+loc.yna.2018$bearing<-(bearing(loc.yna.2018[,c("Longitude","Latitude")],colony,f=0))+180
+loc.yna.2018$Status<-revalue(loc.yna.2018$Status,c("fail" = "Fail 2018", 
                                          "success" = "Success 2018"))
-loc.yna<-subset(loc.yna,loc.yna$States=="1"| loc.yna$States=="2")
+loc.yna.2018<-subset(loc.yna.2018,loc.yna.2018$States=="1"| loc.yna.2018$States=="2")
 
-g2<-ggplot(loc.yna, aes(x = bearing,fill=Status)) +
+g2<-ggplot(loc.yna.2018, aes(x = bearing,fill=Status)) +
   geom_histogram( color = "gray10",breaks=brk) +
   scale_x_continuous(breaks = seq(0, 360, 30),limits=c(0,360)) +
   scale_fill_manual(values = mycols) +
@@ -273,5 +281,15 @@ g2<-ggplot(loc.yna, aes(x = bearing,fill=Status)) +
  #   tiff("Figures/Rose_diagram_2018.tif", width=12,height=7,res=500,units="cm",compression="lzw")
  # print(g2)
  # dev.off()
+
+  loc.fail.2018<-subset(loc.yna.2018,loc.yna.2018$Status=="fail")
+loc.suc.2018<-subset(loc.yna.2018,loc.yna.2018$Status=="success")
+  
+save(loc.fail.2018,"Data/NewlyCreatedData/ForRestLocFail2018.RData")
+save(loc.suc.2018,"Data/NewlyCreatedData/ForRestLocSuccess2018.RData")
+ 
+rm(loc.fail.2018,loc.suc.2018)
+
+  
 ```
 
