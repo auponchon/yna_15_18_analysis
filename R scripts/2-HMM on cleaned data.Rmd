@@ -17,7 +17,7 @@ Best set of parameters are determined based on the highest negative lihelihood.
 
 ### Fitting a HMM on 2015 data
 
-```{r HMM test 2015, eval=F}
+```{r HMM test 2015}
 load("Data/NewlyCreatedData/clean_interp_loc_2015.RData")
 
 library(moveHMM)
@@ -33,7 +33,7 @@ par(mfrow=c(1,2))
 hist(proc.essai$step)
 hist(proc.essai$angle)
 
-#fiding the right set of parameters for step length and turning angles  for 3 states
+#finding the right set of parameters for step length and turning angles  for 3 states
  set.seed(12345)
  nruns<-25
  mles<-vector("numeric",length=nruns)
@@ -97,11 +97,6 @@ hist(proc.essai$angle)
  # angleMean0<-c(0,0,0)  
  # kappa0<-c(0.79,0.99,0.69)
 
-```
-
-After testing different sets of parameters and comparing how von mises and wrapcauchy, we take the ones that give the lowest likelihood to run the final model. Here, the lowest one is with wrpcauchy distributions. 
-
-```{r final HMM 2015}
 #Test with best paramaters with wrpcauchy angle distributions
 mu0<-c(1.32,8.5,9.59)
 sigma0<-c(1.42,14.50,9.51)  
@@ -110,18 +105,21 @@ stepPar0<-c(mu0,sigma0,zeromass0)
 angleMean0<-c(0,0,0)  
 kappa0<-c(0.79,0.99,0.69) 
 anglePar0<-c(angleMean0,kappa0)
-finmodWPC<-fitHMM(data=proc.essai,nbStates=3,stepPar0=stepPar0,anglePar0=anglePar0,
+finmodwrp.2015<-fitHMM(data=proc.essai,nbStates=3,stepPar0=stepPar0,anglePar0=anglePar0,
            formula=~1,angleDist="wrpcauchy")
 
-res<-pseudoRes(finmodWPC)
+res<-pseudoRes(finmodwrp.2015)
 par(mfrow=c(1,2))
 hist(res$stepRes)
 hist(res$angle)
  
-plotPR(finmodWPC)
-AIC(finmodWPC)
+plotPR(finmodwrp.2015)
+AIC(finmodwrp.2015)
 
-loc.interpolated.2015$States<-viterbi(finmodWPC)
+print(finmodwrp.2015)
+plot(finmodwrp.2015,animals=4)
+
+loc.interpolated.2015$States<-viterbi(finmodwrp.2015)
 save(loc.interpolated.2015,file="Data/NewlyCreatedData/loc_interpolated_states_2015.RData")
 
 #delimit hours falling into duty cycle on (5am to 22pm UTM)
@@ -134,7 +132,7 @@ save(loc.interpolated.day.2015,file="Data/NewlyCreatedData/loc_interpolated_stat
 
 ### Fitting HMM on 2018 data
 
-```{r HMM test 2018, eval=F}
+```{r HMM test 2018}
 load("Data/NewlyCreatedData/clean_interp_loc_2018.RData")
 
 
@@ -199,22 +197,13 @@ hist(proc.essai$angle)
 # 
 # table(round(mles))
 
- 1.2849528 14.4269864 24.8022089  5.1154613 23.0152968  3.9096624
- [7]  0.0000000  3.1415927  3.1415927  0.3520217  0.2085277  0.7847806
-[1] -20560.4
-
  #lowest likelihood: -20560.5  with wrpcauchy
  #parameters:  mu0<-c(1.28,14.42,24.80)
  #sigma0<-c(5.11,23.02,3.91)  
  # angleMean0<-c(0,3.14,3.14)  
  # kappa0<-c(0.35,0.2,0.78)
 
-```
 
-After testing different sets of parameters and comparing how von mises and wrapcauchy, we take the ones that give the lowest likelihood to 
-run the final model 
-
-```{r final HMM}
 #Test with best paramaters with wrpcauchy angle distributions
 mu0<-c(1.28,14.42,24.80)
  sigma0<-c(5.11,23.02,3.91)
@@ -222,18 +211,22 @@ mu0<-c(1.28,14.42,24.80)
   angleMean0<-c(0,3.14,3.14)  
  kappa0<-c(0.35,0.2,0.78)
   anglePar0<-c(angleMean0,kappa0)
-finmodWPC<-fitHMM(data=proc.essai,nbStates=3,stepPar0=stepPar0,anglePar0=anglePar0,
+finmodWPC.2018<-fitHMM(data=proc.essai,nbStates=3,stepPar0=stepPar0,anglePar0=anglePar0,
            formula=~1,angleDist="wrpcauchy")
 
- res<-pseudoRes(finmodWPC)
+ res<-pseudoRes(finmodWPC.2018)
  par(mfrow=c(1,2))
 hist(res$stepRes)
 hist(res$angle)
  
-plotPR(finmodWPC)
-AIC(finmodWPC)
+plotPR(finmodWPC.2018)
+AIC(finmodWPC.2018)
 
-loc.interpolated.2018$States<-viterbi(finmodWPC)
+print(finmodWPC.2018)
+plot(finmodWPC.2018,animals=1)
+
+
+loc.interpolated.2018$States<-viterbi(finmodWPC.2018)
 save(loc.interpolated.2018,file="Data/NewlyCreatedData/loc_interpolated_states_2018.RData")
 
 #delimit hours falling into duty cycle on (5am to 22pm UTM)
