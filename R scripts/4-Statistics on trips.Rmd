@@ -1,0 +1,146 @@
+---
+title: "4-Statistical analysis"
+author: "Aurore Ponchon"
+date: "20/04/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,message=FALSE,warning=FALSE,dpi=400)
+```
+
+## Statistical analysis on raw trips
+
+```{r trip}
+library(lme4)
+library(afex)
+library(ggplot2)
+library(viridis)
+library(plotrix)
+library(gridExtra)
+source("R scripts/functions.R")
+
+load("Data/NewlyCreatedData/raw_trips_2015.RData")
+load("Data/NewlyCreatedData/raw_trips_2018.RData")
+
+rawtrips.2015<-raw_trips_summary_ind(dataset.2015)  #function from source file
+rawtrips.2018<-raw_trips_summary_ind(ALL.2018) 
+
+rawtrips.2015$Year<-2015
+rawtrips.2018$Year<-2018
+
+ALL<-rbind(rawtrips.2015,rawtrips.2018)
+
+#Maximal distance to the colony (km)
+modl1<-lmer(sqrt(Distmax) ~ Status*Year + (1|ID),data=ALL)
+modl13<-lmer(sqrt(Distmax) ~ Status+Year + (1|ID),data=ALL)
+
+anova(modl1,modl13)
+anova(modl13)
+
+#Duration of the trip (h)
+modl2<-lmer(sqrt(TripDur) ~ Status*Year + (1|ID),data=ALL)
+modl23<-lmer(sqrt(TripDur) ~ Status+Year + (1|ID),data=ALL)
+
+anova(modl2,modl23)
+anova(modl23)
+
+#Total distance travelled (km)
+modl3<-lmer(sqrt(TotalPath) ~ Status*Year + (1|ID),data=ALL)
+modl33<-lmer(sqrt(TotalPath) ~ Status+Year + (1|ID),data=ALL)
+
+anova(modl3,modl33)
+anova(modl33)
+```
+
+## Statistical analysis on nest attendance
+
+Nest attendance is calculated as the duration between two at-sea trips.
+
+```{r nest attendance}
+load("Data/RawData/Attendance.RData")
+
+modl4<-lmer(sqrt(Difftime) ~ Status*Year + (1|ID),data=nest)
+modl41<-lmer(sqrt(Difftime) ~ Status+Year + (1|ID),data=nest)
+modl42<-lmer(sqrt(Difftime) ~ Status + (1|ID),data=nest)
+modl43<-lmer(sqrt(Difftime) ~ Year + (1|ID),data=nest)
+
+anova(modl4,modl41)
+anova(modl41)
+```
+
+## Plots with trip characteristics
+
+```{r plots of trips characteristics ,fig.height=8,fig.width=15,dpi=400}
+colo<-inferno(2,begin=0.35,end=0.8)
+mycol<-c(colo[1], colo[2],colo[1],colo[2])
+
+ALL$Interac<-paste(ALL$Status,ALL$Year,sep=" ")
+ALL$Interac<-factor(ALL$Interac,levels=c("success 2015","fail 2015","success 2018","fail 2018"))
+
+ #maximal distance
+dist<-ggplot(ALL,aes(x=Interac,y=Distmax, fill=Interac,
+                                       colour=Interac) ) +
+  geom_boxplot(outlier.alpha = 0, alpha=0.3, show.legend = FALSE)+
+  geom_jitter(width=0.1, show.legend = FALSE)+
+  scale_y_continuous(limits=c(0,1500),breaks=seq(0,1500,500),expand=c(0.01,0.01))+
+ labs(y="Maximal distance to the colony (km)",tag="a)",x="") +
+  scale_fill_manual(values=mycol) +
+  scale_colour_manual(values=mycol)  +
+  theme(text = element_text(size=10),
+        axis.text = element_text(size=10),
+        legend.text = element_text(size=10),
+        axis.title.x=element_blank())
+
+#trip duration
+dur<-ggplot(ALL,aes(x=Interac,y=TripDur, 
+                                       fill=Interac, colour=Interac) )+
+  geom_jitter(width=0.1, show.legend = FALSE)+
+  geom_boxplot(outlier.alpha = 0, alpha=0.3, show.legend = FALSE)+
+  labs(y="Trip duration (hrs)", x="",tag="b)") +
+  scale_y_continuous(limits=c(0,400),expand=c(0.01,0.01))+
+  scale_fill_manual(values=mycol) +
+scale_colour_manual(values=mycol)+
+  theme(text = element_text(size=10),
+        axis.text = element_text(size=10),
+        legend.text = element_text(size=10),
+        axis.title.x=element_blank())
+
+#total distance travelled
+tot<-ggplot(ALL,aes(x=Interac,y=TotalPath, 
+                                      fill=Interac, colour=Interac) )+
+  geom_jitter(width=0.1, show.legend = FALSE)+
+  geom_boxplot(outlier.alpha = 0, alpha=0.3, show.legend = FALSE)+
+  labs(y="Total distance travelled (km)",x="",tag="c)") +
+  scale_y_continuous(limits=c(0,5000),expand=c(0.01,0.01))+
+  scale_fill_manual(values=mycol) +
+  scale_colour_manual(values=mycol)+
+  theme(text = element_text(size=10),
+        axis.text = element_text(size=10),
+        legend.text = element_text(size=10),
+        axis.title.x=element_blank())
+
+#nest attendance
+nest$Interac<-paste(nest$Status,nest$Year,sep=" ")
+nest$Interac<-factor(nest$Interac,levels=c("success 2015","fail 2015","success 2018","fail 2018"))
+
+att<-ggplot(nest,aes(x=Interac,y=Difftime, 
+                                      fill=Interac, colour=Interac) )+
+  geom_jitter(width=0.1,show.legend=F)+
+  geom_boxplot(outlier.alpha = 0, alpha=0.3, show.legend = FALSE)+
+  labs(y="Nest attendance (hrs)",x="",tag="d)") +
+  scale_y_continuous(limits=c(0,120),expand=c(0.01,0.01))+
+  scale_fill_manual(values=mycol)  +
+  scale_colour_manual(values=mycol)+
+  theme(text = element_text(size=10),
+        axis.text = element_text(size=10),
+        axis.title.x=element_blank())
+
+# tiff("Figures/Stats trip characteristics.tif",compression="lzw",
+#      res=600,width=6500,height=3500)
+grid.arrange(arrangeGrob(dist,dur,tot,att,
+                         ncol=2,nrow=2))
+
+# dev.off()
+```
+

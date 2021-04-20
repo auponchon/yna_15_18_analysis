@@ -238,4 +238,15 @@ clean_trips_locations<-function (dataset,diff.threshold){
 } #end of function
 
 
+######################################################################################
+## Function to pint a legend in ggplot
+######################################################################################
+
+gg_legend<-function(a.gplot){
+  tmp <- ggplot_gtable(ggplot_build(a.gplot))
+  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+  legend <- tmp$grobs[[leg]]
+  return(legend)}
+
+
 
