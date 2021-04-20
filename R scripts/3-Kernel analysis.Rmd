@@ -9,7 +9,9 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE,message=FALSE, warning=FALSE)
 ```
 
-## Extracting locations and paths for each selected trip for 2015
+## Calculating kernels and bearing
+
+### Extracting locations and paths for each selected trip for 2015
 
 Paths are extracted based on all interpolated trips including night time data. On the contrary, points are extracted based on data for daylight only.
 
@@ -74,7 +76,7 @@ writeOGR(loc.suc.day.2015, dsn="Data/NewlyCreatedData/Shapefiles",
          layer="Locations_success_behav_day_2015", driver="ESRI Shapefile",overwrite_layer=T)
 ```
 
-## Calculation UD kernels for each group in 2015
+### Calculation UD kernels for each group in 2015
 
 Smoothing factor ***h*** is fixed and common to all groups both in 2015 and 2018.
 
@@ -88,17 +90,23 @@ loc.2015<-spTransform(loc.2015, CRS("+proj=utm +zone=45 +ellps=WGS84"))
 
  KUD.2015<- kernelUD(loc.2015[,2],same4all=T,h=70000,grid=1000)
     KUDvol.2015 <- getvolumeUD(KUD.2015)
-    ver90.2015<-getverticeshr(KUDvol.2015 ,90)
-    ver50.2015<-getverticeshr(KUDvol.2015 ,50)
+    ver90.suc.2015<-getverticeshr(KUDvol.2015 ,90,whi="success")
+    ver50.suc.2015<-getverticeshr(KUDvol.2015 ,50,whi="success")
+     ver90.fail.2015<-getverticeshr(KUDvol.2015 ,90,whi="fail")
+    ver50.fail.2015<-getverticeshr(KUDvol.2015 ,50,whi="fail")
 
     # export shapefiles
-    writeOGR(ver90.2015, dsn="Data/NewlyCreatedData/Shapefiles",
-             layer="KUD_90_day_for_2015", driver="ESRI Shapefile",overwrite_layer=T)
-    writeOGR(ver50.2015, dsn="Data/NewlyCreatedData/Shapefiles",
-             layer="KUD_50_day_for_2015", driver="ESRI Shapefile",overwrite_layer=T)
+    writeOGR(ver90.suc.2015, dsn="Data/NewlyCreatedData/Shapefiles",
+             layer="KUD_90_day_suc_for_2015", driver="ESRI Shapefile",overwrite_layer=T)
+    writeOGR(ver50.suc.2015, dsn="Data/NewlyCreatedData/Shapefiles",
+             layer="KUD_50_day_suc_for_2015", driver="ESRI Shapefile",overwrite_layer=T)
+     writeOGR(ver90.fail.2015, dsn="Data/NewlyCreatedData/Shapefiles",
+             layer="KUD_90_day_fail_for_2015", driver="ESRI Shapefile",overwrite_layer=T)
+    writeOGR(ver50.fail.2015, dsn="Data/NewlyCreatedData/Shapefiles",
+             layer="KUD_50_day_fail_for_2015", driver="ESRI Shapefile",overwrite_layer=T)
 ```
 
-## Extracting locations and paths for each selected trip for 2018
+### Extracting locations and paths for each selected trip for 2018
 
 ```{r paths and points 2018}
 load("Data/NewlyCreatedData/loc_interpolated_states_2018.RData")
@@ -154,7 +162,7 @@ writeOGR(loc.suc.day.2018, dsn="Data/NewlyCreatedData/Shapefiles",
          layer="Locations_success_behav_day_2018", driver="ESRI Shapefile",overwrite_layer=T)
 ```
 
-## Calculating UD kernels for each group in 2018
+### Calculating UD kernels for each group in 2018
 
 Smoothing factor ***h*** is fixed and common to all groups both in 2015 and 2018.
 
@@ -169,29 +177,101 @@ loc.2018<-spTransform(loc.2018, CRS("+proj=utm +zone=45 +ellps=WGS84"))
 
  KUD.2018<- kernelUD(loc.2018[,2],same4all=T,h=70000,grid=1000)
     KUDvol.2018 <- getvolumeUD(KUD.2018)
-    ver90.2018<-getverticeshr(KUDvol.2018 ,90)
-    ver50.2018<-getverticeshr(KUDvol.2018 ,50)
+    ver90.suc.2018<-getverticeshr(KUDvol.2018 ,90,whi="success")
+    ver50.suc.2018<-getverticeshr(KUDvol.2018 ,50,whi="success")
+     ver90.fail.2018<-getverticeshr(KUDvol.2018 ,90,whi="fail")
+    ver50.fail.2018<-getverticeshr(KUDvol.2018 ,50,whi="fail")
 
-    writeOGR(ver90.2018, dsn="Data/NewlyCreatedData/Shapefiles",
-             layer="KUD_90_day_for_2018", driver="ESRI Shapefile",overwrite_layer=T)
-    writeOGR(ver50.2018, dsn="Data/NewlyCreatedData/Shapefiles",
-             layer="KUD_50_day_for_2018", driver="ESRI Shapefile",overwrite_layer=T)
+    # export shapefiles
+    writeOGR(ver90.suc.2018, dsn="Data/NewlyCreatedData/Shapefiles",
+             layer="KUD_90_day_suc_for_2018", driver="ESRI Shapefile",overwrite_layer=T)
+    writeOGR(ver50.suc.2018, dsn="Data/NewlyCreatedData/Shapefiles",
+             layer="KUD_50_day_suc_for_2018", driver="ESRI Shapefile",overwrite_layer=T)
+     writeOGR(ver90.fail.2018, dsn="Data/NewlyCreatedData/Shapefiles",
+             layer="KUD_90_day_fail_for_2018", driver="ESRI Shapefile",overwrite_layer=T)
+    writeOGR(ver50.fail.2018, dsn="Data/NewlyCreatedData/Shapefiles",
+             layer="KUD_50_day_fail_for_2018", driver="ESRI Shapefile",overwrite_layer=T)
 ```
-
 
 ```{r Map kernel 2015 and 2018, echo=FALSE, fig.width=15,fig.height=8}
 par(mfrow=c(1,2))
-plot(ver90.2015,col=c("pink","yellow")[as.factor(ver90.2015$id)],
-     border=c("pink","yellow")[as.factor(ver90.2015$id)],
+
+plot(ver90.fail.2015,col="pink", border="pink",
      main="Kernel UD 2015")
-plot(ver50.2015,col=c("purple","orange")[as.factor(ver50.2015$id)],
-     border=c("purple","orange")[as.factor(ver50.2015$id)],add=T)
+plot(ver90.suc.2015,col="yellow", border="yellow",add=T)
+plot(ver50.suc.2015,col="orange", border="orange",add=T)
+plot(ver50.fail.2015,col="purple", border="purple",add=T)
 
-
-plot(ver90.2018,col=c("pink","yellow")[as.factor(ver90.2018$id)],
-     border=c("pink","yellow")[as.factor(ver90.2018$id)],
+plot(ver90.fail.2018,col="pink", border="pink",
      main="Kernel UD 2018")
-plot(ver50.2018,col=c("purple","orange")[as.factor(ver50.2018$id)],
-     border=c("purple","orange")[as.factor(ver50.2018$id)],add=T)
+plot(ver90.suc.2018,col="yellow", border="yellow",add=T)
+plot(ver50.suc.2018,col="orange", border="orange",add=T)
+plot(ver50.fail.2018,col="purple", border="purple",add=T)
+```
+
+## Calculating and plotting bearing
+
+```{r Bearing, fig.height=7, fig.width=15, dpi=400}
+library(geosphere)
+library(plyr)
+library(ggplot2)
+library(viridis)
+
+load("Data/NewlyCreatedData/loc_interpolated_states_day_2015.RData")
+loc.yna<-loc.interpolated.day.2015
+
+colony<-data.frame(Longitude =77.52356,Latitude=-37.8545)
+loc.yna$bearing<-(bearing(loc.yna[,c("Longitude","Latitude")],colony,f=0))+180
+loc.yna$Status<-revalue(loc.yna$Status,c("fail" = "Fail 2015", 
+                                         "success" = "Success 2015"))
+loc.yna<-subset(loc.yna,loc.yna$States=="1"| loc.yna$States=="2")
+mycols<-inferno(2,begin=0.35,end=0.8)
+
+brk<-seq(0,360,30)
+g1<-ggplot(loc.yna, aes(x = bearing,fill=Status)) +
+  geom_histogram( color = "gray10",breaks=brk) +
+  scale_x_continuous(breaks = seq(0, 360, 30),limits=c(0,360)) +
+  scale_fill_manual(values = mycols) +
+  coord_polar(theta="x",start = 0, direction = 1,clip="on") +
+  facet_grid(. ~ Status) +
+  theme_minimal() +
+  theme( legend.position = "none",
+    axis.text.y = element_blank(),
+    axis.title = element_blank())
+  
+  print(g1)  
+
+   # tiff("Figures/Rose_diagram_2015.tif", width=12,height=7,res=500,units="cm",compression="lzw")
+ # print(g1)
+ # dev.off()
+
+#2018  
+load("Data/NewlyCreatedData/loc_interpolated_states_day_2018.RData")
+
+loc.yna<-loc.interpolated.day.2018
+colony<-data.frame(Longitude =77.52356,Latitude=-37.8545)
+
+
+loc.yna$bearing<-(bearing(loc.yna[,c("Longitude","Latitude")],colony,f=0))+180
+loc.yna$Status<-revalue(loc.yna$Status,c("fail" = "Fail 2018", 
+                                         "success" = "Success 2018"))
+loc.yna<-subset(loc.yna,loc.yna$States=="1"| loc.yna$States=="2")
+
+g2<-ggplot(loc.yna, aes(x = bearing,fill=Status)) +
+  geom_histogram( color = "gray10",breaks=brk) +
+  scale_x_continuous(breaks = seq(0, 360, 30),limits=c(0,360)) +
+  scale_fill_manual(values = mycols) +
+  coord_polar(theta="x",start = 0, direction = 1,clip="on") +
+  facet_grid(. ~ Status) +
+  theme_minimal() +
+  theme( legend.position = "none",
+    axis.text.y = element_blank(),
+    axis.title = element_blank())
+  
+  print(g2)
+
+ #   tiff("Figures/Rose_diagram_2018.tif", width=12,height=7,res=500,units="cm",compression="lzw")
+ # print(g2)
+ # dev.off()
 ```
 
