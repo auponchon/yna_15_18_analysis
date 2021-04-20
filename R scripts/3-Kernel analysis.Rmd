@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE,message=FALSE, warning=FALSE)
 
 Paths are extracted based on all interpolated trips including night time data. On the contrary, points are extracted based on data for daylight only.
 
-```{r paths and points 2015}
+```{r paths and points 2015, message =FALSE, warnong=FALSE}
 load("Data/NewlyCreatedData/loc_interpolated_states_2015.RData")
 load("Data/NewlyCreatedData/loc_interpolated_states_day_2015.RData")
 
@@ -40,7 +40,7 @@ sf_lines <- sf_locs %>%
   sf::st_sf(ID = as.factor(unique(sf_locs$ID)))
 
 st_write(sf_lines,layer="Line_fail_2015",dsn="Data/NewlyCreatedData/Shapefiles",
-         driver="ESRI Shapefile", delete_layer = TRUE,update=T)
+         driver="ESRI Shapefile", delete_layer = TRUE,update=T,quiet=T)
 
 sf_locs <- sf::st_as_sf(loc.yna.suc.2015, coords = c("Longitude","Latitude")) %>% 
   sf::st_set_crs(4326)
@@ -57,7 +57,7 @@ driver="ESRI Shapefile", delete_layer = TRUE,update=T)
 
 #subset data for failed and successful breeders for locations
 loc.fail.day.2015<-subset(loc.interpolated.day.2015,loc.interpolated.day.2015$Status=="fail")
-droplevels(loc.fail.day.2015)
+loc.fail.day.2015<-droplevels(loc.fail.day.2015)
 coordinates(loc.fail.day.2015)<-c("Longitude","Latitude")
 proj4string(loc.fail.day.2015) <- CRS("+proj=longlat +ellps=WGS84")
 loc.fail.day.2015<-spTransform(loc.fail.day.2015, CRS("+proj=utm +zone=45 +ellps=WGS84"))
@@ -65,7 +65,7 @@ writeOGR(loc.fail.day.2015, dsn="Data/NewlyCreatedData/Shapefiles",
          layer="Locations_failed_behav_day_2015", driver="ESRI Shapefile",overwrite_layer=T)
 
 loc.suc.day.2015<-subset(loc.interpolated.day.2015,loc.interpolated.day.2015$Status=="success")
-droplevels(loc.suc.day.2015)
+loc.suc.day.2015<-droplevels(loc.suc.day.2015)
 coordinates(loc.suc.day.2015)<-c("Longitude","Latitude")
 proj4string(loc.suc.day.2015) <- CRS("+proj=longlat +ellps=WGS84")
 loc.suc.day.2015<-spTransform(loc.suc.day.2015, CRS("+proj=utm +zone=45 +ellps=WGS84"))
@@ -86,16 +86,16 @@ coordinates(loc.2015)<-c("Longitude","Latitude")
 proj4string(loc.2015) <- CRS("+proj=longlat +ellps=WGS84")
 loc.2015<-spTransform(loc.2015, CRS("+proj=utm +zone=45 +ellps=WGS84"))
 
- KUD<- kernelUD(loc.2015[,2],same4all=T,h=70000,grid=1000)
-    KUDvol <- getvolumeUD(KUD)
-    ver90<-getverticeshr(KUDvol ,90)
-    ver50<-getverticeshr(KUDvol ,50)
+ KUD.2015<- kernelUD(loc.2015[,2],same4all=T,h=70000,grid=1000)
+    KUDvol.2015 <- getvolumeUD(KUD.2015)
+    ver90.2015<-getverticeshr(KUDvol.2015 ,90)
+    ver50.2015<-getverticeshr(KUDvol.2015 ,50)
 
-    # 
-    writeOGR(ver90, dsn="Data/NewlyCreatedData/Shapefiles",
-             layer="KUD_90_day_for", driver="ESRI Shapefile",overwrite_layer=T)
-    writeOGR(ver50, dsn="Data/NewlyCreatedData/Shapefiles",
-             layer="KUD_50_day_for", driver="ESRI Shapefile",overwrite_layer=T)
+    # export shapefiles
+    writeOGR(ver90.2015, dsn="Data/NewlyCreatedData/Shapefiles",
+             layer="KUD_90_day_for_2015", driver="ESRI Shapefile",overwrite_layer=T)
+    writeOGR(ver50.2015, dsn="Data/NewlyCreatedData/Shapefiles",
+             layer="KUD_50_day_for_2015", driver="ESRI Shapefile",overwrite_layer=T)
 ```
 
 ## Extracting locations and paths for each selected trip for 2018
@@ -105,11 +105,11 @@ load("Data/NewlyCreatedData/loc_interpolated_states_2018.RData")
 load("Data/NewlyCreatedData/loc_interpolated_states_day_2018.RData")
 
 #subset data for failed and successful breeders to plot paths
-loc.yna.fail<-subset(loc.interpolated.2018,loc.interpolated.2018$Status=="fail")
-loc.yna.suc<-subset(loc.interpolated.2018,loc.interpolated.2018$Status=="success")
+loc.fail.2018<-subset(loc.interpolated.2018,loc.interpolated.2018$Status=="fail")
+loc.suc.2018<-subset(loc.interpolated.2018,loc.interpolated.2018$Status=="success")
 
 #create shapefiles paths
-sf_locs <- sf::st_as_sf(loc.yna.fail, coords = c("Longitude","Latitude")) %>% 
+sf_locs <- sf::st_as_sf(loc.fail.2018, coords = c("Longitude","Latitude")) %>% 
   sf::st_set_crs(4326)
 
 sf_lines <- sf_locs %>%
@@ -122,7 +122,7 @@ sf_lines <- sf_locs %>%
 st_write(sf_lines,layer="Line_fail_2018",dsn="Data/NewlyCreatedData/Shapefiles",
          driver="ESRI Shapefile", delete_layer = TRUE,update=T)
 
-sf_locs <- sf::st_as_sf(loc.yna.suc, coords = c("Longitude","Latitude")) %>% 
+sf_locs <- sf::st_as_sf(loc.suc.2018, coords = c("Longitude","Latitude")) %>% 
   sf::st_set_crs(4326)
 
 sf_lines <- sf_locs %>%
@@ -136,21 +136,21 @@ st_write(sf_lines,layer="Line_success_2018",dsn="Data/NewlyCreatedData/Shapefile
 driver="ESRI Shapefile", delete_layer = TRUE,update=T)
 
 #subset data for failed and successful breeders for locations
-loc.yna.fail.day<-subset(loc.interpolated.day.2018,loc.interpolated.day.2018$Status=="fail")
-droplevels(loc.yna.fail.day)
-coordinates(loc.yna.fail.day)<-c("Longitude","Latitude")
-proj4string(loc.yna.fail.day) <- CRS("+proj=longlat +ellps=WGS84")
-loc.yna.fail.day<-spTransform(loc.yna.fail.day, CRS("+proj=utm +zone=45 +ellps=WGS84"))
-writeOGR(loc.yna.fail.day, dsn="Data/NewlyCreatedData/Shapefiles",
+loc.fail.day.2018<-subset(loc.interpolated.day.2018,loc.interpolated.day.2018$Status=="fail")
+loc.fail.day.2018<-droplevels(loc.fail.day.2018)
+coordinates(loc.fail.day.2018)<-c("Longitude","Latitude")
+proj4string(loc.fail.day.2018) <- CRS("+proj=longlat +ellps=WGS84")
+loc.fail.day.2018<-spTransform(loc.fail.day.2018, CRS("+proj=utm +zone=45 +ellps=WGS84"))
+writeOGR(loc.fail.day.2018, dsn="Data/NewlyCreatedData/Shapefiles",
          layer="Locations_failed_behav_day_2018", driver="ESRI Shapefile",overwrite_layer=T)
 
-loc.yna.suc.day<-subset(loc.interpolated.day.2018,loc.interpolated.day.2018$Status=="success")
-droplevels(loc.yna.suc.day)
-coordinates(loc.yna.suc.day)<-c("Longitude","Latitude")
-proj4string(loc.yna.suc.day) <- CRS("+proj=longlat +ellps=WGS84")
-loc.yna.suc.day<-spTransform(loc.yna.suc.day, CRS("+proj=utm +zone=45 +ellps=WGS84"))
+loc.suc.day.2018<-subset(loc.interpolated.day.2018,loc.interpolated.day.2018$Status=="success")
+loc.suc.day.2018<-droplevels(loc.suc.day.2018)
+coordinates(loc.suc.day.2018)<-c("Longitude","Latitude")
+proj4string(loc.suc.day.2018) <- CRS("+proj=longlat +ellps=WGS84")
+loc.suc.day.2018<-spTransform(loc.suc.day.2018, CRS("+proj=utm +zone=45 +ellps=WGS84"))
 
-writeOGR(loc.yna.suc.day, dsn="Data/NewlyCreatedData/Shapefiles",
+writeOGR(loc.suc.day.2018, dsn="Data/NewlyCreatedData/Shapefiles",
          layer="Locations_success_behav_day_2018", driver="ESRI Shapefile",overwrite_layer=T)
 ```
 
@@ -158,7 +158,7 @@ writeOGR(loc.yna.suc.day, dsn="Data/NewlyCreatedData/Shapefiles",
 
 Smoothing factor ***h*** is fixed and common to all groups both in 2015 and 2018.
 
-```{r kernels 20185}
+```{r kernels 2018}
 
 loc.2018<-loc.interpolated.day.2018[loc.interpolated.day.2018$States=="1"|
                                        loc.interpolated.day.2018$States=="2",]
@@ -167,13 +167,31 @@ coordinates(loc.2018)<-c("Longitude","Latitude")
 proj4string(loc.2018) <- CRS("+proj=longlat +ellps=WGS84")
 loc.2018<-spTransform(loc.2018, CRS("+proj=utm +zone=45 +ellps=WGS84"))
 
- KUD<- kernelUD(loc.2018[,2],same4all=T,h=70000,grid=1000)
-    KUDvol <- getvolumeUD(KUD)
-    ver90<-getverticeshr(KUDvol ,90)
-    ver50<-getverticeshr(KUDvol ,50)
+ KUD.2018<- kernelUD(loc.2018[,2],same4all=T,h=70000,grid=1000)
+    KUDvol.2018 <- getvolumeUD(KUD.2018)
+    ver90.2018<-getverticeshr(KUDvol.2018 ,90)
+    ver50.2018<-getverticeshr(KUDvol.2018 ,50)
 
-    writeOGR(ver90, dsn="Data/NewlyCreatedData/Shapefiles",
-             layer="KUD_90_day_for", driver="ESRI Shapefile",overwrite_layer=T)
-    writeOGR(ver50, dsn="Data/NewlyCreatedData/Shapefiles",
-             layer="KUD_50_day_for", driver="ESRI Shapefile",overwrite_layer=T)
+    writeOGR(ver90.2018, dsn="Data/NewlyCreatedData/Shapefiles",
+             layer="KUD_90_day_for_2018", driver="ESRI Shapefile",overwrite_layer=T)
+    writeOGR(ver50.2018, dsn="Data/NewlyCreatedData/Shapefiles",
+             layer="KUD_50_day_for_2018", driver="ESRI Shapefile",overwrite_layer=T)
 ```
+
+
+```{r Map kernel 2015 and 2018, echo=FALSE, fig.width=15,fig.height=8}
+par(mfrow=c(1,2))
+plot(ver90.2015,col=c("pink","yellow")[as.factor(ver90.2015$id)],
+     border=c("pink","yellow")[as.factor(ver90.2015$id)],
+     main="Kernel UD 2015")
+plot(ver50.2015,col=c("purple","orange")[as.factor(ver50.2015$id)],
+     border=c("purple","orange")[as.factor(ver50.2015$id)],add=T)
+
+
+plot(ver90.2018,col=c("pink","yellow")[as.factor(ver90.2018$id)],
+     border=c("pink","yellow")[as.factor(ver90.2018$id)],
+     main="Kernel UD 2018")
+plot(ver50.2018,col=c("purple","orange")[as.factor(ver50.2018$id)],
+     border=c("purple","orange")[as.factor(ver50.2018$id)],add=T)
+```
+

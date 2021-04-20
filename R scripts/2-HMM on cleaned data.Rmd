@@ -223,7 +223,7 @@ plotPR(finmodWPC.2018)
 AIC(finmodWPC.2018)
 
 print(finmodWPC.2018)
-plot(finmodWPC.2018,animals=1)
+plot(finmodWPC.2018,animals=22)
 
 
 loc.interpolated.2018$States<-viterbi(finmodWPC.2018)
