@@ -40,6 +40,14 @@ modl13<-lmer(sqrt(Distmax) ~ Status+Year + (1|ID),data=ALL)
 anova(modl1,modl13)
 anova(modl13)
 
+#Between failed and successful breeders in 2015
+var.test(rawtrips.2015$Distmax[which(rawtrips.2015$Status=="success")],
+         rawtrips.2015$Distmax[which(rawtrips.2015$Status=="fail")])
+
+#Between failed and successful breeders in 2018
+var.test(rawtrips.2018$Distmax[which(rawtrips.2018$Status=="success")],
+         rawtrips.2018$Distmax[which(rawtrips.2018$Status=="fail")])
+
 #Duration of the trip (h)
 modl2<-lmer(sqrt(TripDur) ~ Status*Year + (1|ID),data=ALL)
 modl23<-lmer(sqrt(TripDur) ~ Status+Year + (1|ID),data=ALL)
@@ -47,12 +55,29 @@ modl23<-lmer(sqrt(TripDur) ~ Status+Year + (1|ID),data=ALL)
 anova(modl2,modl23)
 anova(modl23)
 
+#Between failed and successful breeders in 2015
+var.test(rawtrips.2015$TripDur[which(rawtrips.2015$Status=="success")],
+         rawtrips.2015$TripDur[which(rawtrips.2015$Status=="fail")])
+
+#Between failed and successful breeders in 2018
+var.test(rawtrips.2018$TripDur[which(rawtrips.2018$Status=="success")],
+         rawtrips.2018$TripDur[which(rawtrips.2018$Status=="fail")])
+
+
 #Total distance travelled (km)
 modl3<-lmer(sqrt(TotalPath) ~ Status*Year + (1|ID),data=ALL)
 modl33<-lmer(sqrt(TotalPath) ~ Status+Year + (1|ID),data=ALL)
 
 anova(modl3,modl33)
 anova(modl33)
+
+#Between failed and successful breeders in 2015
+var.test(rawtrips.2015$TotalPath[which(rawtrips.2015$Status=="success")],
+         rawtrips.2015$TotalPath[which(rawtrips.2015$Status=="fail")])
+
+#Between failed and successful breeders in 2018
+var.test(rawtrips.2018$TotalPath[which(rawtrips.2018$Status=="success")],
+         rawtrips.2018$TotalPath[which(rawtrips.2018$Status=="fail")])
 ```
 
 ## Statistical analysis on nest attendance
@@ -71,7 +96,7 @@ anova(modl4,modl41)
 anova(modl41)
 ```
 
-##Statistical analysis on at-sea behavioural states
+## Statistical analysis on at-sea behavioural states
 
 ```{r behaviour}
 load("Data/NewlyCreatedData/loc_interpolated_states_day_2015.RData")
@@ -122,7 +147,7 @@ summary(mm.rest)
 
 ## Plots with trip characteristics
 
-```{r plots of trips characteristics ,fig.height=8,fig.width=15,dpi=400}
+```{r plots of trips characteristics ,echo=FALSE, fig.height=8,fig.width=15,dpi=400}
 colo<-inferno(2,begin=0.35,end=0.8)
 mycol<-c(colo[1], colo[2],colo[1],colo[2])
 
@@ -193,6 +218,11 @@ grid.arrange(arrangeGrob(dist,dur,tot,att,
                          ncol=2,nrow=2))
 
 # dev.off()
+```
+
+## At-sea behaviour
+
+```{r plots of at-sea behaviour ,echo=FALSE, fig.height=8,fig.width=15,dpi=400}
 behav$Interac<-paste(behav$Status,behav$Year,sep=" ")
 behav$Interac<-factor(behav$Interac,levels=c("success 2015","fail 2015","success 2018","fail 2018"))
 
