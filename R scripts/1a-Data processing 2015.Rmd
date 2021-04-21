@@ -98,6 +98,10 @@ for (n in 2:nrow(fail.2015)){
 }
 fail.2015$Difftime[which(fail.2015$Difftime<0)]<-0
 fail.2015<-subset(fail.2015,fail.2015$DateTime < date.max)
+
+#remove HAR10 which has incomplete trips
+fail.2015<-subset(fail.2015,fail.2015$ID!="HAR10")
+
 ```
 
 ```{r plot of birds 2015 all,echo=F,fig.width=15,fig.height=6}
@@ -130,7 +134,7 @@ dataset.2015<-dataset.2015[duplicated(dataset.2015$DateTime)==FALSE,] # remove d
 dataset.2015$TravelNb<-"NA"
 dataset.2015$PathLength<-0
 
-##Parameters to define a trip in 2018
+##Parameters to define a trip in 2015
 dist.thres<-1             #distance threshold (in km)
 last.dist<-10           #distance threshold (in km) when having only one location between 2 trips
 row.thres<- 12               #number of rows constituting a trip
@@ -144,7 +148,7 @@ save(dataset.2015,file="Data/NewlyCreatedData/raw_trips_2015.RData")
 
 #summarize raw trips by individuals or status. 
 #There is no time gap thresholds here, just total duration and distance
-dist.max.all.trips.2018.status<-raw_trips_summary_status(dataset.2015)  #function from source file
+dist.max.all.trips.2015.status<-raw_trips_summary_status(dataset.2015)  #function from source file
 
 #10h gaps
 diff.thres<-10*60
@@ -177,7 +181,7 @@ trips3h<-clean_trips_summary_status(dataset.2015,diff.thres)
 The first table shows the summary of trip characteristics with raw data (without any time gap threshold). The others show the summary of trip characteristics with different time gap thresholds. 
 
 ```{r, echo=F}
-kbl(dist.max.all.trips.2018.status,caption="Summary of raw trips") %>%
+kbl(dist.max.all.trips.2015.status,caption="Summary of raw trips") %>%
   kable_styling(bootstrap_options = c("striped", "hover"))
 
 kbl(trips10h,caption="Summary of trips with gaps <10h") %>%
@@ -332,19 +336,6 @@ anova(dur)
 
 anova(totdist)
 ```
-
-#Power analysis based on Simr package
-
-```{r SIMR, echo=F}
-#  simmaxdist<-powerSim(maxdist)
-#  simdur<-powerSim(dur)
-#  simdtotdist<-powerSim(totdist)
-# 
-#  simmaxdist
-#  simdur
-#  simdtotdist
-```
-
 
 
 

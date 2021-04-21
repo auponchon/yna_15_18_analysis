@@ -90,7 +90,7 @@ raw_trips_summary_status<-function (dataset){
     
     for (i in 1:length(id)){
         temp<-subset(dataset,dataset$ID==id[i])
-        nb.trip<-unique(temp$TravelNb)
+        nb.trip<-sort(unique(temp$TravelNb))
         
         if (length(nb.trip)>1){
             for (a in 2:length(nb.trip)){
@@ -108,12 +108,11 @@ raw_trips_summary_status<-function (dataset){
     dist.max.all.trips<-      ddply(dist.max.all.trips,.(Status),summarize,
                                     NbInd=length(unique(ID)),
                                     NbTravel=length(TravelNb),
-                                    MeanDist=mean(Distmax), SDDist= std.error(Distmax, na.rm=T),
+                                    MeanDist=mean(Distmax), SEDist= std.error(Distmax, na.rm=T),
                                     MinDist=min(Distmax),MaxDist=max(Distmax),
-                                    MeanDur=mean(TripDur),SDDur= std.error(TripDur, na.rm=T),
+                                    MeanDur=mean(TripDur),SEDur= std.error(TripDur, na.rm=T),
                                     MinTripDur=min(TripDur),MaxTripDur=max(TripDur),
-                                    MinmaxDiff=min(maxDiffTime),MaxmaxDiff=max(maxDiffTime),
-                                    MeanTotPath=mean(TotalPath),SDDur=std.error(TotalPath, na.rm=T),
+                                    MeanTotPath=mean(TotalPath),SETotPath=std.error(TotalPath, na.rm=T),
                                     MinTotPath=min(TotalPath),MaxTotPath=max(TotalPath))
     return(dist.max.all.trips)
 }
@@ -128,7 +127,7 @@ clean_trips_summary_ind<-function (dataset,diff.threshold){
     
 for (i in 1:length(id)){
     temp<-subset(dataset,dataset$ID==id[i])
-    nb.trip<-unique(temp$TravelNb)
+    nb.trip<-sort(unique(temp$TravelNb))
     
     if (length(nb.trip)>1){
         for (a in 2:length(nb.trip)){
@@ -166,7 +165,7 @@ clean_trips_summary_status<-function (dataset,diff.threshold){
     
     for (i in 1:length(id)){
         temp<-subset(dataset,dataset$ID==id[i])
-        nb.trip<-unique(temp$TravelNb)
+        nb.trip<-sort(unique(temp$TravelNb))
         
         if (length(nb.trip)>1){
             for (a in 2:length(nb.trip)){
@@ -193,12 +192,11 @@ clean_trips_summary_status<-function (dataset,diff.threshold){
     summary.clean.trips<-    ddply(summary.clean.trips,.(Status),summarize,
                                    NbInd=length(unique(ID)),
                                    NbTravel=length(TravelNb),
-                                   MeanDist=mean(Distmax), SDDist= std.error(Distmax, na.rm=T),
+                                   MeanDist=mean(Distmax), SEDist= std.error(Distmax, na.rm=T),
                                    MinDist=min(Distmax),MaxDist=max(Distmax),
-                                   MeanDur=mean(TripDur),SDDur= std.error(TripDur, na.rm=T),
+                                   MeanDur=mean(TripDur),SEDur= std.error(TripDur, na.rm=T),
                                    MinTripDur=min(TripDur),MaxTripDur=max(TripDur),
-                                   MinmaxDiff=min(maxDiffTime),MaxmaxDiff=max(maxDiffTime),
-                                   MeanTotPath=mean(TotalPath),SDDur=std.error(TotalPath, na.rm=T),
+                                   MeanTotPath=mean(TotalPath),SEtotPath=std.error(TotalPath, na.rm=T),
                                    MinTotPath=min(TotalPath),MaxTotPath=max(TotalPath))
     return(summary.clean.trips)
     
@@ -215,7 +213,7 @@ clean_trips_locations<-function (dataset,diff.threshold){
     
     for (i in 1:length(id)){
         temp<-subset(dataset,dataset$ID==id[i])
-        nb.trip<-unique(temp$TravelNb)
+        nb.trip<-sort(unique(temp$TravelNb))
         
         if (length(nb.trip)>1){
             for (a in 2:length(nb.trip)){
@@ -239,7 +237,7 @@ clean_trips_locations<-function (dataset,diff.threshold){
 
 
 ######################################################################################
-## Function to pint a legend in ggplot
+## Function to print a legend in ggplot
 ######################################################################################
 
 gg_legend<-function(a.gplot){

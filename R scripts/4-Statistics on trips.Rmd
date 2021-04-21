@@ -18,6 +18,8 @@ library(ggplot2)
 library(viridis)
 library(plotrix)
 library(gridExtra)
+library(plyr)
+library(plotrix)
 source("R scripts/functions.R")
 
 load("Data/NewlyCreatedData/raw_trips_2015.RData")
@@ -71,31 +73,49 @@ anova(modl41)
 
 ##Statistical analysis on at-sea behavioural states
 
-```{r}
+```{r behaviour}
 load("Data/NewlyCreatedData/loc_interpolated_states_day_2015.RData")
 load("Data/NewlyCreatedData/loc_interpolated_states_day_2018.RData")
 
-behav15<-ddply(loc.interpolated,.(ID,Status,TravelNb,States),summarize,
+behav15<-ddply(loc.interpolated.day.2015,.(ID,Status,TravelNb,States),summarize,
                SumDur=sum(Difftime))
 
-trip15<-ddply(loc.interpolated,.(ID,Status,TravelNb),summarize,
+trip15<-ddply(loc.interpolated.day.2015,.(ID,Status,TravelNb),summarize,
               TotDur=sum(Difftime))
 
 behav15<-merge(behav15,trip15,by=c("ID","Status","TravelNb"))
 behav15$Prop<-behav15$SumDur/behav15$TotDur*100
 behav15$Year<-2015
 
-behav18<-ddply(loc.interpolated.2018,.(ID,Status,TravelNb,States),summarize,
+behav18<-ddply(loc.interpolated.day.2018,.(ID,Status,TravelNb,States),summarize,
                SumDur=sum(Difftime))
 
-trip18<-ddply(loc.interpolated.2018,.(ID,Status,TravelNb),summarize,
+trip18<-ddply(loc.interpolated.day.2018,.(ID,Status,TravelNb),summarize,
               TotDur=sum(Difftime))
 
 behav18<-merge(behav18,trip18,by=c("ID","Status","TravelNb"))
 behav18$Prop<-behav18$SumDur/behav18$TotDur*100
 behav18$Year<-2018
 
+behav<-rbind(behav15,behav18)
+behav$Year<-as.factor(behav$Year)
 
+behav1<-ddply(behav,.(Year,Status,ID,States),summarize,MeanIndProp=mean(Prop))
+
+behav2<-ddply(behav1,.(Year,Status,States),summarize,MeanProp=mean(MeanIndProp),
+              se=std.error(MeanIndProp))
+
+behav.for<-behav1[behav1$States==3,]
+behav.rest<-behav1[behav1$States==1,]
+behav.fly<-behav1[behav1$States==2,]
+
+mm.for<-glmer(MeanIndProp/100~Status+Year +(1|ID),data=behav.for,family="binomial")
+mm.rest<-glmer(MeanIndProp/100~Status+Year +(1|ID),data=behav.rest,family="binomial")
+mm.fly<-glmer(MeanIndProp/100~Status+Year +(1|ID),data=behav.fly,family="binomial")
+
+summary(mm.for)
+summary(mm.fly)
+summary(mm.rest)
 
 ```
 
@@ -173,5 +193,20 @@ grid.arrange(arrangeGrob(dist,dur,tot,att,
                          ncol=2,nrow=2))
 
 # dev.off()
+behav$Interac<-paste(behav$Status,behav$Year,sep=" ")
+behav$Interac<-factor(behav$Interac,levels=c("success 2015","fail 2015","success 2018","fail 2018"))
+
+att<-ggplot(behav,aes(x=Interac,y=Prop, 
+                     fill=Interac, colour=Interac) )+
+  geom_jitter(width=0.1, show.legend = FALSE)+
+  facet_grid(.~States)+
+  geom_boxplot(outlier.alpha = 0, alpha=0.5, show.legend = FALSE)+
+  ylab("Proportion of time per trip") +
+  xlab("") +
+  scale_y_continuous(limits=c(0,100))+
+  scale_colour_manual(values=mycol)+
+  scale_fill_manual(values=mycol)
+print(att)
+
 ```
 
