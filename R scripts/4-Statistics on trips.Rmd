@@ -19,6 +19,8 @@ library(viridis)
 library(plotrix)
 library(gridExtra)
 library(plyr)
+library(kableExtra)
+library(tidyverse)
 library(plotrix)
 source("R scripts/functions.R")
 
@@ -94,6 +96,18 @@ modl43<-lmer(sqrt(Difftime) ~ Year + (1|ID),data=nest)
 
 anova(modl4,modl41)
 anova(modl41)
+```
+```{r echo=FALSE}
+nest1<-as_tibble(nest)
+nest1<-nest1 %>%
+  group_by(Year,Status) %>% 
+  summarise(Dur=mean(Difftime),SEDur=std.error(Difftime),
+            MinDur=min(Difftime),MaxDur=max(Difftime))
+nest2<-as.data.frame(nest1)
+
+kbl(nest2,caption="Summary of nest attendance") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
 ```
 
 ## Statistical analysis on at-sea behavioural states

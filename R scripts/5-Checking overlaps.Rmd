@@ -1,0 +1,183 @@
+---
+title: "Overlap randomization"
+author: "Aurore Ponchon"
+date: "22/04/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,message=FALSE,warning=FALSE)
+```
+
+## Assess significance of overlaps between failed and successful breeders in 2015
+
+```{r Year 2015}
+library(DescTools)
+library(rgdal)
+library(maptools)
+library(adehabitatHR)
+
+load("Data/NewlyCreatedData/loc_interpolated_states_day_2015.RData")
+
+r.cor.true.2015<-NULL
+
+loc.2015<-subset(loc.interpolated.day.2015,loc.interpolated.day.2015$States=="1" |
+                    loc.interpolated.day.2015$States=="3")
+
+loc.2015<-droplevels(loc.2015)
+
+faily<-unique(loc.2015$ID[which(loc.2015$Status=="fail")])
+sucy<-unique(loc.2015$ID[which(loc.2015$Status=="success")])
+id<-unique(loc.2015$ID)
+
+loc.obs<-loc.2015
+coordinates(loc.obs)<-c("Longitude","Latitude")
+proj4string(loc.obs) <- CRS("+proj=longlat +ellps=WGS84")
+loc<-spTransform(loc.obs, CRS("+proj=utm +zone=45 +ellps=WGS84"))
+
+kov.50<-  kerneloverlap(loc.obs[,1],method="UDOI",grid=500,percent=50)
+kov.90<-  kerneloverlap(loc.obs[,1],method="UDOI",grid=500,percent=90)
+diag(kov.50)<-NA
+diag(kov.90)<-NA
+mat.bino<-kov.50
+
+for (i in 1:nrow(mat.bino)){
+    for (j in 1:ncol(mat.bino)){
+        ifelse(rownames(mat.bino)[i] == colnames(mat.bino)[j],mat.bino[i,j]<-NA,
+               ifelse(rownames(mat.bino)[i]  %in% faily & 
+                          colnames(mat.bino)[j] %in% faily,
+                      mat.bino[i,j]<-0,
+                      ifelse(rownames(mat.bino)[i]  %in% sucy & 
+                                 colnames(mat.bino)[j] %in% sucy,
+                             mat.bino[i,j]<-0,
+                             mat.bino[i,j]<- 1)))
+    }
+}
+
+r.cor.50.true.2015<-cor(as.vector(kov.50), as.vector(mat.bino),method="pearson",use="pairwise.complete.obs")
+r.cor.90.true.2015<-cor(as.vector(kov.90), as.vector(mat.bino),method="pearson",use="pairwise.complete.obs")
+
+
+r.cor.rand.2015<-read.table("Data/NewlyCreatedData/r_cor_rand_fail_suc_2015.txt",header=T,sep="\t")  
+r.cor.obs.2015<-c(r.cor.50.true.2015,r.cor.90.true.2015)
+
+ylimy<-100
+
+p.val<-NULL
+
+par(mfrow=c(1,2))
+obs<-r.cor.50.true.2015
+hist(r.cor.rand.2015$R.cor[which(r.cor.rand.2015$HR==50)],breaks=seq(-0.5,0.5,0.01),bty="n",ylim=c(0,ylimy),
+     xaxt="n",yaxt="n")
+axis(1,at=seq(-0.3,0.2,0.1))
+axis(2,at=seq(0,ylimy,20))
+abline(v=obs,lty=2,col="red")
+
+prop<- length(which(r.cor.rand.2015$R.cor[which(r.cor.rand.2015$HR==50)]< obs))/1000
+
+
+temp<-data.frame(HR=50,Obs=obs,Mean.rand=mean(r.cor.rand.2015$R.cor[which(r.cor.rand.2015$HR==50)]),
+                 Sd.rand=sd(r.cor.rand.2015$R.cor[which(r.cor.rand.2015$HR==50)]),pval=prop)
+p.val<-rbind(p.val,temp)
+
+
+obs<-r.cor.90.true.2015
+hist(r.cor.rand.2015$R.cor[which(r.cor.rand.2015$HR==90)],breaks=seq(-0.5,0.5,0.01),bty="n",ylim=c(0,ylimy),
+     xaxt="n",yaxt="n")
+axis(1,at=seq(-0.3,0.2,0.1))
+axis(2,at=seq(0,ylimy,20))
+abline(v=obs,lty=2,col="red")
+
+prop<- length(which(r.cor.rand.2015$R.cor[which(r.cor.rand.2015$HR==90)]< obs))/1000
+
+
+temp<-data.frame(HR=90,Obs=obs,Mean.rand=mean(r.cor.rand.2015$R.cor[which(r.cor.rand.2015$HR==90)]),
+                 Sd.rand=sd(r.cor.rand.2015$R.cor[which(r.cor.rand.2015$HR==90)]),pval=prop)
+p.val<-rbind(p.val,temp)
+
+p.val
+```
+
+## Assess significance of overlaps between failed and successful breeders in 2018
+
+```{r Year 2015}
+load("Data/NewlyCreatedData/loc_interpolated_states_day_2018.RData")
+
+r.cor.true.2018<-NULL
+
+loc.2018<-subset(loc.interpolated.day.2018,loc.interpolated.day.2018$States=="1" |
+                    loc.interpolated.day.2018$States=="3")
+
+loc.2018<-droplevels(loc.2018)
+
+faily<-unique(loc.2018$ID[which(loc.2018$Status=="fail")])
+sucy<-unique(loc.2018$ID[which(loc.2018$Status=="success")])
+id<-unique(loc.2018$ID)
+
+loc.obs<-loc.2018
+coordinates(loc.obs)<-c("Longitude","Latitude")
+proj4string(loc.obs) <- CRS("+proj=longlat +ellps=WGS84")
+loc<-spTransform(loc.obs, CRS("+proj=utm +zone=45 +ellps=WGS84"))
+
+kov.50<-  kerneloverlap(loc.obs[,1],method="UDOI",grid=500,percent=50)
+kov.90<-  kerneloverlap(loc.obs[,1],method="UDOI",grid=500,percent=90)
+diag(kov.50)<-NA
+diag(kov.90)<-NA
+mat.bino<-kov.50
+
+for (i in 1:nrow(mat.bino)){
+    for (j in 1:ncol(mat.bino)){
+        ifelse(rownames(mat.bino)[i] == colnames(mat.bino)[j],mat.bino[i,j]<-NA,
+               ifelse(rownames(mat.bino)[i]  %in% faily & 
+                          colnames(mat.bino)[j] %in% faily,
+                      mat.bino[i,j]<-0,
+                      ifelse(rownames(mat.bino)[i]  %in% sucy & 
+                                 colnames(mat.bino)[j] %in% sucy,
+                             mat.bino[i,j]<-0,
+                             mat.bino[i,j]<- 1)))
+    }
+}
+
+r.cor.50.true.2018<-cor(as.vector(kov.50), as.vector(mat.bino),method="pearson",use="pairwise.complete.obs")
+r.cor.90.true.2018<-cor(as.vector(kov.90), as.vector(mat.bino),method="pearson",use="pairwise.complete.obs")
+
+
+r.cor.rand.2018<-read.table("Data/NewlyCreatedData/r_cor_rand_fail_suc_2018.txt",header=T,sep="\t")  
+r.cor.obs.2018<-c(r.cor.50.true.2018,r.cor.90.true.2018)
+
+ylimy<-500
+
+p.val<-NULL
+
+par(mfrow=c(1,2))
+obs<-r.cor.50.true.2018
+hist(r.cor.rand.2018$R.cor[which(r.cor.rand.2018$HR==50)],breaks=seq(-0.5,0.10,0.05),bty="n",ylim=c(0,ylimy),
+     xaxt="n",yaxt="n",xlab="" ,main="HR = 50")
+axis(1,at=seq(-0.5,0.1,0.1))
+axis(2,at=seq(0,ylimy,50))
+abline(v=obs,lty=2,col="red")
+
+prop<- length(which(r.cor.rand.2018$R.cor[which(r.cor.rand.2018$HR==50)]< obs))/1000
+
+
+temp<-data.frame(HR=50,Obs=obs,Mean.rand=mean(r.cor.rand.2018$R.cor[which(r.cor.rand.2018$HR==50)]),
+                 Sd.rand=sd(r.cor.rand.2018$R.cor[which(r.cor.rand.2018$HR==50)]),pval=prop)
+p.val<-rbind(p.val,temp)
+
+
+obs<-r.cor.90.true.2018
+hist(r.cor.rand.2018$R.cor[which(r.cor.rand.2018$HR==90)],breaks=seq(-0.5,0.1,0.05),bty="n",ylim=c(0,ylimy),
+     xaxt="n",yaxt="n",xlab="" ,main="HR = 90")
+axis(1,at=seq(-0.5,0.1,0.1))
+axis(2,at=seq(0,ylimy,50))
+abline(v=obs,lty=2,col="red")
+
+prop<- length(which(r.cor.rand.2018$R.cor[which(r.cor.rand.2018$HR==90)]< obs))/1000
+
+
+temp<-data.frame(HR=90,Obs=obs,Mean.rand=mean(r.cor.rand.2018$R.cor[which(r.cor.rand.2018$HR==90)]),
+                 Sd.rand=sd(r.cor.rand.2018$R.cor[which(r.cor.rand.2018$HR==90)]),pval=prop)
+p.val<-rbind(p.val,temp)
+
+p.val
+```
