@@ -46,7 +46,7 @@ sf_lines <- sf_locs %>%
   sf::st_sf(ID = as.factor(unique(sf_locs$ID)))
 
 st_write(sf_lines,layer="Line_fail_2015",dsn="Data/NewlyCreatedData/Shapefiles",
-         driver="ESRI Shapefile", delete_layer = TRUE,update=T,quiet=T)
+         driver="ESRI Shapefile", delete_layer = TRUE,append=T,quiet=T)
 
 sf_locs <- sf::st_as_sf(loc.yna.suc.2015, coords = c("Longitude","Latitude")) %>% 
   sf::st_set_crs(4326)
@@ -59,7 +59,7 @@ sf_lines <- sf_locs %>%
   sf::st_sf(ID = as.factor(unique(sf_locs$ID)))
 
 st_write(sf_lines,layer="Line_success_2015",dsn="Data/NewlyCreatedData/Shapefiles",
-driver="ESRI Shapefile", delete_layer = TRUE,update=T)
+  driver="ESRI Shapefile", delete_layer = TRUE,append=T)
 
 #subset data for failed and successful breeders for locations
 loc.fail.day.2015<-subset(loc.interpolated.day.2015,loc.interpolated.day.2015$Status=="fail")
@@ -142,7 +142,7 @@ sf_lines <- sf_locs %>%
   sf::st_sf(ID = as.factor(unique(sf_locs$ID)))
 
 st_write(sf_lines,layer="Line_fail_2018",dsn="Data/NewlyCreatedData/Shapefiles",
-         driver="ESRI Shapefile", delete_layer = TRUE,update=T)
+         driver="ESRI Shapefile", delete_layer = TRUE,append=T)
 
 sf_locs <- sf::st_as_sf(loc.suc.2018, coords = c("Longitude","Latitude")) %>% 
   sf::st_set_crs(4326)
@@ -155,7 +155,7 @@ sf_lines <- sf_locs %>%
   sf::st_sf(ID = as.factor(unique(sf_locs$ID)))
 
 st_write(sf_lines,layer="Line_success_2018",dsn="Data/NewlyCreatedData/Shapefiles",
-driver="ESRI Shapefile", delete_layer = TRUE,update=T)
+driver="ESRI Shapefile", delete_layer = TRUE,append=T)
 
 #subset data for failed and successful breeders for locations
 loc.fail.day.2018<-subset(loc.interpolated.day.2018,loc.interpolated.day.2018$Status=="fail")

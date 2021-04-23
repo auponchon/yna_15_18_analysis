@@ -123,9 +123,8 @@ loc.interpolated.2015$States<-viterbi(finmodwrp.2015)
 save(loc.interpolated.2015,file="Data/NewlyCreatedData/loc_interpolated_states_2015.RData")
 
 #delimit hours falling into duty cycle on (5am to 22pm UTM)
-duty.off<-c('5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21') 
-loc.interpolated.day.2015 <- subset(loc.interpolated.2015,
-                                strftime(loc.interpolated.2015$DateTime, "%H", tz="UTC") %in% duty.off)
+duty.on<-c(5:21) 
+loc.interpolated.day.2015 <-loc.interpolated.2015[which(as.numeric(strftime(loc.interpolated.2015$DateTime, "%H",tz="GMT")) %in% duty.on),]
 
 save(loc.interpolated.day.2015,file="Data/NewlyCreatedData/loc_interpolated_states_day_2015.RData")
 ```
@@ -230,9 +229,9 @@ loc.interpolated.2018$States<-viterbi(finmodWPC.2018)
 save(loc.interpolated.2018,file="Data/NewlyCreatedData/loc_interpolated_states_2018.RData")
 
 #delimit hours falling into duty cycle on (5am to 22pm UTM)
-duty.off<-c('5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21') 
-loc.interpolated.day.2018 <- subset(loc.interpolated.2018,
-                                strftime(loc.interpolated.2018$DateTime, "%H", tz="UTC") %in% duty.off)
+duty.on<-c(5:21) 
+loc.interpolated.day.2018 <-loc.interpolated.2018[  which(as.numeric(strftime(loc.interpolated.2018$DateTime, 
+                                                                              "%H",tz="GMT")) %in% duty.on),]
 
 
 save(loc.interpolated.day.2018,file="Data/NewlyCreatedData/loc_interpolated_states_day_2018.RData")

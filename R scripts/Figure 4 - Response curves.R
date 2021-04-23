@@ -81,7 +81,7 @@ plot(fail_SST_2015$x,fail_SST_2015$y,type="l",bty="n",xaxt="n",yaxt="n",ylab="",
      xlim=c(0,25),  ylim=c(0,0.8), main="",xlab="",col=pal[2])
 lines(success_SST_2015$x,success_SST_2015$y,col=pal[1])
 lines(fail_SST_2018$x,fail_SST_2018$y,col=pal[2],lty=2)
-lines(success_SST_2018$x,success_SST_2015$y,col=pal[1],lty=2)
+lines(success_SST_2018$x,success_SST_2018$y,col=pal[1],lty=2)
 axis(1,at=seq(0,25,5),pos=0)
 axis(2,at=seq(0,0.8,0.2),pos=0,las=1)
 mtext(side=1,"SST (°C)",line=1.75,cex=0.8)
@@ -132,8 +132,8 @@ par(mar=c(4,3,0.5,0))
 plot(fail_gCHLA_2015$x,fail_gCHLA_2015$y,type="l",bty="n",xaxt="n",yaxt="n",ylab="",
      xlim=c(0,60),  ylim=c(0,0.8), main="",xlab="",col=pal[2])
 lines(success_gCHLA_2015$x,success_gCHLA_2015$y,col=pal[1])
-lines(fail_gCHLA_2018$x,fail_gCHLA_2018$y,col=pal[2],lty=2)
 lines(success_gCHLA_2018$x,success_gCHLA_2018$y,lty=2,col=pal[1])
+lines(fail_gCHLA_2018$x,fail_gCHLA_2018$y,col=pal[2],lty=2)
 axis(1,at=seq(0,60,12),pos=0)
 axis(2,at=seq(0,0.8,0.2),pos=0,las=1,labels=T)
 mtext(side=1,"CHLA gradient",line=1.75,cex=0.8)
@@ -168,7 +168,7 @@ mtext(side=3,"g)",line=-2,adj=0.1,cex=0.9)
 
 plot(fail_Wind_2018$x,fail_Wind_2018$y,type="l",bty="n",xaxt="n",yaxt="n",ylab="",
      xlab="",col="white")
-legend(x=-1,y=0.4,lty=c(1,1,2,2),col=c(pal,pal),box.lty=0,
+legend(x=-1,y=0.4,lty=c(1,1,2,2),col=c(pal,pal),box.lty=0,cex=1.2,
        legend=c("success 2015","fail 2015","success 2018","fail 2018"))
 
 

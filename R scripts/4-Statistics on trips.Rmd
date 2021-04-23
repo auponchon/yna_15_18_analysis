@@ -116,15 +116,23 @@ kbl(nest2,caption="Summary of nest attendance") %>%
 load("Data/NewlyCreatedData/loc_interpolated_states_day_2015.RData")
 load("Data/NewlyCreatedData/loc_interpolated_states_day_2018.RData")
 
-behav15<-ddply(loc.interpolated.day.2015,.(ID,Status,TravelNb,States),summarize,
-               SumDur=sum(Difftime))
+loc.interpolated.day.2015$TravelID<-paste(loc.interpolated.day.2015$TravelNb,
+                           format(loc.interpolated.day.2015$DateTime,format="%d"),
+                            sep=".")
 
-trip15<-ddply(loc.interpolated.day.2015,.(ID,Status,TravelNb),summarize,
-              TotDur=sum(Difftime))
+behav15<-ddply(loc.interpolated.day.2015,.(ID,Status,TravelID,States),summarize,
+               SumDur=sum(Difftime)/60)
+
+trip15<-ddply(loc.interpolated.day.2015,.(ID,Status,TravelID),summarize,
+              TotDur=sum(Difftime)/60)
 
 behav15<-merge(behav15,trip15,by=c("ID","Status","TravelNb"))
 behav15$Prop<-behav15$SumDur/behav15$TotDur*100
 behav15$Year<-2015
+
+loc.interpolated.day.2018$TravelID<-paste(loc.interpolated.day.2018$TravelNb,
+                           format(loc.interpolated.day.2018$DateTime,format="%d"),
+                            sep=".")
 
 behav18<-ddply(loc.interpolated.day.2018,.(ID,Status,TravelNb,States),summarize,
                SumDur=sum(Difftime))
@@ -226,12 +234,12 @@ att<-ggplot(nest,aes(x=Interac,y=Difftime,
         axis.text = element_text(size=10),
         axis.title.x=element_blank())
 
-# tiff("Figures/Stats trip characteristics.tif",compression="lzw",
-#      res=600,width=6500,height=3500)
+ # tiff("Figures/Figure 2 - Stats trip characteristics.tif",compression="lzw",
+ #      res=600,width=6500,height=3500)
 grid.arrange(arrangeGrob(dist,dur,tot,att,
                          ncol=2,nrow=2))
 
-# dev.off()
+ # dev.off()
 ```
 
 ## At-sea behaviour
