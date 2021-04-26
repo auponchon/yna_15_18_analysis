@@ -126,7 +126,7 @@ behav15<-ddply(loc.interpolated.day.2015,.(ID,Status,TravelID,States),summarize,
 trip15<-ddply(loc.interpolated.day.2015,.(ID,Status,TravelID),summarize,
               TotDur=sum(Difftime)/60)
 
-behav15<-merge(behav15,trip15,by=c("ID","Status","TravelNb"))
+behav15<-merge(behav15,trip15,by=c("ID","Status","TravelID"))
 behav15$Prop<-behav15$SumDur/behav15$TotDur*100
 behav15$Year<-2015
 
@@ -134,13 +134,13 @@ loc.interpolated.day.2018$TravelID<-paste(loc.interpolated.day.2018$TravelNb,
                            format(loc.interpolated.day.2018$DateTime,format="%d"),
                             sep=".")
 
-behav18<-ddply(loc.interpolated.day.2018,.(ID,Status,TravelNb,States),summarize,
+behav18<-ddply(loc.interpolated.day.2018,.(ID,Status,TravelID,States),summarize,
                SumDur=sum(Difftime))
 
-trip18<-ddply(loc.interpolated.day.2018,.(ID,Status,TravelNb),summarize,
+trip18<-ddply(loc.interpolated.day.2018,.(ID,Status,TravelID),summarize,
               TotDur=sum(Difftime))
 
-behav18<-merge(behav18,trip18,by=c("ID","Status","TravelNb"))
+behav18<-merge(behav18,trip18,by=c("ID","Status","TravelID"))
 behav18$Prop<-behav18$SumDur/behav18$TotDur*100
 behav18$Year<-2018
 
@@ -244,18 +244,22 @@ grid.arrange(arrangeGrob(dist,dur,tot,att,
 
 ## At-sea behaviour
 
-```{r plots of at-sea behaviour ,echo=FALSE, fig.height=8,fig.width=15,dpi=400}
+```{r plots of at-sea behaviour ,echo=FALSE, fig.height=5,fig.width=15,dpi=400}
 behav$Interac<-paste(behav$Status,behav$Year,sep=" ")
 behav$Interac<-factor(behav$Interac,levels=c("success 2015","fail 2015","success 2018","fail 2018"))
+behav$States<-as.factor(behav$States)
+behav$States<-revalue(behav$States,c("1" = "Resting",
+                                   "2"="Travelling",
+                                   "3" = "Foraging"))
 
 att<-ggplot(behav,aes(x=Interac,y=Prop, 
                      fill=Interac, colour=Interac) )+
   geom_jitter(width=0.1, show.legend = FALSE)+
   facet_grid(.~States)+
   geom_boxplot(outlier.alpha = 0, alpha=0.5, show.legend = FALSE)+
-  ylab("Proportion of time per trip") +
+  ylab("Proportion of time per day") +
   xlab("") +
-  scale_y_continuous(limits=c(0,100))+
+  scale_y_continuous(limits=c(0,100),expand=c(0,0))+
   scale_colour_manual(values=mycol)+
   scale_fill_manual(values=mycol)
 print(att)
