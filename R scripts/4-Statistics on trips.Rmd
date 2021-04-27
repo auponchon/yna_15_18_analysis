@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE,message=FALSE,warning=FALSE,dpi=400)
 
 ```{r trip}
 library(lme4)
-library(afex)
+library(lmerTest)
 library(ggplot2)
 library(viridis)
 library(plotrix)
@@ -152,6 +152,10 @@ behav1<-ddply(behav,.(Year,Status,ID,States),summarize,MeanIndProp=mean(Prop))
 behav2<-ddply(behav1,.(Year,Status,States),summarize,MeanProp=mean(MeanIndProp),
               se=std.error(MeanIndProp))
 
+kbl(behav2,caption="Summary of at-sea behaviour") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+
 behav.for<-behav1[behav1$States==3,]
 behav.rest<-behav1[behav1$States==1,]
 behav.fly<-behav1[behav1$States==2,]
@@ -252,7 +256,7 @@ behav$States<-revalue(behav$States,c("1" = "Resting",
                                    "2"="Travelling",
                                    "3" = "Foraging"))
 
-att<-ggplot(behav,aes(x=Interac,y=Prop, 
+att<-ggplot(behav,aes(x=Interac,y=Prop/100, 
                      fill=Interac, colour=Interac) )+
   geom_jitter(width=0.1, show.legend = FALSE)+
   facet_grid(.~States)+
