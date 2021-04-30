@@ -61,16 +61,17 @@ r.cor.90.true.2015<-cor(as.vector(kov.90), as.vector(mat.bino),method="pearson",
 r.cor.rand.2015<-read.table("Data/NewlyCreatedData/r_cor_rand_fail_suc_2015.txt",header=T,sep="\t")  
 r.cor.obs.2015<-c(r.cor.50.true.2015,r.cor.90.true.2015)
 
-ylimy<-100
+ylimy<-500
 
 p.val<-NULL
 
 par(mfrow=c(1,2))
 obs<-r.cor.50.true.2015
-hist(r.cor.rand.2015$R.cor[which(r.cor.rand.2015$HR==50)],breaks=seq(-0.5,0.5,0.01),bty="n",ylim=c(0,ylimy),
-     xaxt="n",yaxt="n")
-axis(1,at=seq(-0.3,0.2,0.1))
-axis(2,at=seq(0,ylimy,20))
+hist(r.cor.rand.2015$R.cor[which(r.cor.rand.2015$HR==50)],
+     breaks=seq(-0.5,0.20,0.05),bty="n",ylim=c(0,ylimy),
+     xaxt="n",yaxt="n",xlab="" ,main="HR = 50")
+axis(1,at=seq(-0.5,0.2,0.1))
+axis(2,at=seq(0,ylimy,50))
 abline(v=obs,lty=2,col="red")
 
 prop<- length(which(r.cor.rand.2015$R.cor[which(r.cor.rand.2015$HR==50)]< obs))/1000
@@ -82,10 +83,11 @@ p.val<-rbind(p.val,temp)
 
 
 obs<-r.cor.90.true.2015
-hist(r.cor.rand.2015$R.cor[which(r.cor.rand.2015$HR==90)],breaks=seq(-0.5,0.5,0.01),bty="n",ylim=c(0,ylimy),
-     xaxt="n",yaxt="n")
-axis(1,at=seq(-0.3,0.2,0.1))
-axis(2,at=seq(0,ylimy,20))
+hist(r.cor.rand.2015$R.cor[which(r.cor.rand.2015$HR==90)],
+     breaks=seq(-0.5,0.2,0.05),bty="n",ylim=c(0,ylimy),
+     xaxt="n",yaxt="n",xlab="" ,main="HR = 90")
+axis(1,at=seq(-0.5,0.2,0.1))
+axis(2,at=seq(0,ylimy,50))
 abline(v=obs,lty=2,col="red")
 
 prop<- length(which(r.cor.rand.2015$R.cor[which(r.cor.rand.2015$HR==90)]< obs))/1000
@@ -94,8 +96,8 @@ prop<- length(which(r.cor.rand.2015$R.cor[which(r.cor.rand.2015$HR==90)]< obs))/
 temp<-data.frame(HR=90,Obs=obs,Mean.rand=mean(r.cor.rand.2015$R.cor[which(r.cor.rand.2015$HR==90)]),
                  Sd.rand=sd(r.cor.rand.2015$R.cor[which(r.cor.rand.2015$HR==90)]),pval=prop)
 p.val<-rbind(p.val,temp)
-
 p.val
+
 ```
 
 ## Assess significance of overlaps between failed and successful breeders in 2018
