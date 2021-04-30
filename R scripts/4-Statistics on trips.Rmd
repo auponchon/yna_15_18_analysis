@@ -22,6 +22,7 @@ library(plyr)
 library(kableExtra)
 library(tidyverse)
 library(plotrix)
+library(simr)
 source("R scripts/functions.R")
 
 load("Data/NewlyCreatedData/raw_trips_2015.RData")
@@ -43,12 +44,10 @@ anova(modl1,modl13)
 anova(modl13)
 
 #Between failed and successful breeders in 2015
-var.test(rawtrips.2015$Distmax[which(rawtrips.2015$Status=="success")],
-         rawtrips.2015$Distmax[which(rawtrips.2015$Status=="fail")])
+var.test(ALL$Distmax[which(ALL$Status=="success")],
+         ALL$Distmax[which(ALL$Status=="fail")])
 
-#Between failed and successful breeders in 2018
-var.test(rawtrips.2018$Distmax[which(rawtrips.2018$Status=="success")],
-         rawtrips.2018$Distmax[which(rawtrips.2018$Status=="fail")])
+powerSim(modl13)
 
 #Duration of the trip (h)
 modl2<-lmer(sqrt(TripDur) ~ Status*Year + (1|ID),data=ALL)
@@ -57,13 +56,11 @@ modl23<-lmer(sqrt(TripDur) ~ Status+Year + (1|ID),data=ALL)
 anova(modl2,modl23)
 anova(modl23)
 
-#Between failed and successful breeders in 2015
-var.test(rawtrips.2015$TripDur[which(rawtrips.2015$Status=="success")],
-         rawtrips.2015$TripDur[which(rawtrips.2015$Status=="fail")])
+powerSim(modl23)
 
-#Between failed and successful breeders in 2018
-var.test(rawtrips.2018$TripDur[which(rawtrips.2018$Status=="success")],
-         rawtrips.2018$TripDur[which(rawtrips.2018$Status=="fail")])
+#Between failed and successful breeders in 2015
+var.test(ALL$TripDur[which(ALL$Status=="success")],
+         ALL$TripDur[which(ALL$Status=="fail")])
 
 
 #Total distance travelled (km)
@@ -73,13 +70,11 @@ modl33<-lmer(sqrt(TotalPath) ~ Status+Year + (1|ID),data=ALL)
 anova(modl3,modl33)
 anova(modl33)
 
-#Between failed and successful breeders in 2015
-var.test(rawtrips.2015$TotalPath[which(rawtrips.2015$Status=="success")],
-         rawtrips.2015$TotalPath[which(rawtrips.2015$Status=="fail")])
+#Between failed and successful breeders over both years
+var.test(ALL$TotalPath[which(ALL$Status=="success")],
+         ALL$TotalPath[which(ALL$Status=="fail")])
 
-#Between failed and successful breeders in 2018
-var.test(rawtrips.2018$TotalPath[which(rawtrips.2018$Status=="success")],
-         rawtrips.2018$TotalPath[which(rawtrips.2018$Status=="fail")])
+powerSim(modl33)
 ```
 
 ## Statistical analysis on nest attendance
@@ -96,6 +91,8 @@ modl43<-lmer(sqrt(Difftime) ~ Year + (1|ID),data=nest)
 
 anova(modl4,modl41)
 anova(modl41)
+
+powerSim(modl41)
 ```
 ```{r echo=FALSE}
 nest1<-as_tibble(nest)
@@ -263,7 +260,7 @@ att<-ggplot(behav,aes(x=Interac,y=Prop/100,
   geom_boxplot(outlier.alpha = 0, alpha=0.5, show.legend = FALSE)+
   ylab("Proportion of time per day") +
   xlab("") +
-  scale_y_continuous(limits=c(0,100),expand=c(0,0))+
+  scale_y_continuous(limits=c(0,1),expand=c(0,0))+
   scale_colour_manual(values=mycol)+
   scale_fill_manual(values=mycol)
 print(att)

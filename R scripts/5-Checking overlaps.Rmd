@@ -233,8 +233,8 @@ for (i in 1:nrow(mat.bino)){
   }
 }
 
-r.cor.50.true<-cor(as.vector(kov.50), as.vector(mat.bino),method="pearson",use="pairwise.complete.obs")
-r.cor.90.true<-cor(as.vector(kov.90), as.vector(mat.bino),method="pearson",use="pairwise.complete.obs")
+r.cor.50.true.fail<-cor(as.vector(kov.50), as.vector(mat.bino),method="pearson",use="pairwise.complete.obs")
+r.cor.90.true.fail<-cor(as.vector(kov.90), as.vector(mat.bino),method="pearson",use="pairwise.complete.obs")
 
 r.cor.rand.fail<-read.table("Data/NewlyCreatedData/r_cor_rand_fail_2015_2018.txt",header=T,sep="\t")  
 r.cor.obs.fail<-c(r.cor.50.true.fail,r.cor.90.true.fail)
@@ -271,6 +271,85 @@ prop<- length(which(r.cor.rand.fail$R.cor[which(r.cor.rand.fail$HR==90)]< obs))/
 
 temp<-data.frame(HR=90,Obs=obs,Mean.rand=mean(r.cor.rand.fail$R.cor[which(r.cor.rand.fail$HR==90)]),
                  Sd.rand=sd(r.cor.rand.fail$R.cor[which(r.cor.rand.fail$HR==90)]),pval=prop)
+p.val<-rbind(p.val,temp)
+
+p.val
+```
+
+```{r successful breeders}
+suc2015<-unique(loc.yna.suc.2015$ID)
+suc2018<-unique(loc.yna.suc.2018$ID)
+
+loc.yna.fail<-droplevels(loc.yna.fail)
+loc.yna.suc<-droplevels(loc.yna.suc)
+
+loc.obs<-loc.yna.suc
+loc.obs$Year<-as.factor(loc.obs$Year)
+loc.obs<-droplevels(loc.obs)
+
+r.cor.true.suc<-NULL
+
+coordinates(loc.obs)<-c("Longitude","Latitude")
+proj4string(loc.obs) <- CRS("+proj=longlat +ellps=WGS84")
+loc<-spTransform(loc.obs, CRS("+proj=utm +zone=45 +ellps=WGS84"))
+
+kov.50<-  kerneloverlap(loc.obs[,1],method="UDOI",grid=500,percent=50)
+kov.90<-  kerneloverlap(loc.obs[,1],method="UDOI",grid=500,percent=90)
+diag(kov.50)<-NA
+diag(kov.90)<-NA
+mat.bino<-kov.50
+
+for (i in 1:nrow(mat.bino)){
+  for (j in 1:ncol(mat.bino)){
+    ifelse(rownames(mat.bino)[i] == colnames(mat.bino)[j],mat.bino[i,j]<-NA,
+           ifelse(rownames(mat.bino)[i]  %in% suc2015 & 
+                    colnames(mat.bino)[j] %in% suc2015,
+                  mat.bino[i,j]<-0,
+                  ifelse(rownames(mat.bino)[i]  %in% suc2018 & 
+                           colnames(mat.bino)[j] %in% suc2018,
+                         mat.bino[i,j]<-0,
+                         mat.bino[i,j]<- 1)))
+  }
+}
+
+r.cor.50.true.suc<-cor(as.vector(kov.50), as.vector(mat.bino),method="pearson",use="pairwise.complete.obs")
+r.cor.90.true.suc<-cor(as.vector(kov.90), as.vector(mat.bino),method="pearson",use="pairwise.complete.obs")
+
+r.cor.rand.suc<-read.table("Data/NewlyCreatedData/r_cor_rand_suc_2015_2018.txt",header=T,sep="\t")  
+r.cor.obs.suc<-c(r.cor.50.true.suc,r.cor.90.true.suc)
+
+ylimy<-500
+
+p.val<-NULL
+
+par(mfrow=c(1,2))
+obs<-r.cor.50.true.suc
+hist(r.cor.rand.suc$R.cor[which(r.cor.rand.suc$HR==50)],breaks=seq(-0.5,0.20,0.05),bty="n",ylim=c(0,ylimy),
+     xaxt="n",yaxt="n",xlab="" ,main="HR = 50")
+axis(1,at=seq(-0.5,0.2,0.1))
+axis(2,at=seq(0,ylimy,50))
+abline(v=obs,lty=2,col="red")
+
+prop<- length(which(r.cor.rand.suc$R.cor[which(r.cor.rand.suc$HR==50)]< obs))/1000
+
+
+temp<-data.frame(HR=50,Obs=obs,Mean.rand=mean(r.cor.rand.suc$R.cor[which(r.cor.rand.suc$HR==50)]),
+                 Sd.rand=sd(r.cor.rand.suc$R.cor[which(r.cor.rand.suc$HR==50)]),pval=prop)
+p.val<-rbind(p.val,temp)
+
+
+obs<-r.cor.90.true.suc
+hist(r.cor.rand.suc$R.cor[which(r.cor.rand.suc$HR==90)],breaks=seq(-0.5,0.2,0.05),bty="n",ylim=c(0,ylimy),
+     xaxt="n",yaxt="n",xlab="" ,main="HR = 90")
+axis(1,at=seq(-0.5,0.2,0.1))
+axis(2,at=seq(0,ylimy,50))
+abline(v=obs,lty=2,col="red")
+
+prop<- length(which(r.cor.rand.suc$R.cor[which(r.cor.rand.suc$HR==90)]< obs))/1000
+
+
+temp<-data.frame(HR=90,Obs=obs,Mean.rand=mean(r.cor.rand.suc$R.cor[which(r.cor.rand.suc$HR==90)]),
+                 Sd.rand=sd(r.cor.rand.suc$R.cor[which(r.cor.rand.suc$HR==90)]),pval=prop)
 p.val<-rbind(p.val,temp)
 
 p.val
